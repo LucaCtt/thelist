@@ -8,9 +8,16 @@ import (
 )
 
 func main() {
-	fileStore := NewFileStore(itemsFile)
-	env := &Env{Store: fileStore}
-	router := newRouter(env)
+	dbStore, err := NewDbStore(&DbOptions{})
+	defer dbStore.Close()
+
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	env := &Env{Store: dbStore}
+	router := NewRouter(env)
 
 	n := negroni.New()
 	n.Use(negroni.NewRecovery())
@@ -18,5 +25,5 @@ func main() {
 	n.UseHandler(router)
 
 	log.Printf("> %s\n", startMsg)
-	log.Fatal(http.ListenAndServe(":8080", n))
+	log.Print(http.ListenAndServe(":8080", n))
 }
