@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -12,13 +14,23 @@ type Env struct {
 	Store Store
 }
 
-func newRouter(env *Env) *httprouter.Router {
+func jsonFprint(w io.Writer, a interface{}) error {
+	json, err := json.Marshal(a)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprint(w, json)
+	return nil
+}
+
+func NewRouter(env *Env) *httprouter.Router {
 	router := httprouter.New()
 	store := env.Store
 
-	router.GET("/item", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		items, err := store.GetAllItems()
-		itemsJSON, err := json.Marshal(items)
+	router.GET("/show", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		shows, err := store.GetAllShows()
 
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -26,7 +38,20 @@ func newRouter(env *Env) *httprouter.Router {
 			return
 		}
 
-		fmt.Fprint(w, itemsJSON)
+		jsonFprint(w, shows)
+	})
+
+	router.GET("/show/:id", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		id, _ := strconv.ParseUint(ps.ByName("id"), 10, 64)
+		show, err := store.GetShow(uint(id))
+
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "Error while reading item")
+			return
+		}
+
+		jsonFprint(w, show)
 	})
 
 	return router
