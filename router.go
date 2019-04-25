@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/LucaCtt/thelist/store"
 	"github.com/julienschmidt/httprouter"
 )
 
 type Env struct {
-	Store Store
+	Store store.Store
 }
 
 func jsonFprint(w io.Writer, a interface{}) error {

@@ -1,7 +1,8 @@
-package main
+package store
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -9,8 +10,10 @@ import (
 
 // Show represents a generic show, like a movie or a TV series.
 type Show struct {
-	gorm.Model
-	ShowID int
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ShowID    int
 }
 
 // Store represents a generic data store, which can be a database, a file, and so on.
@@ -34,21 +37,21 @@ type DbOptions struct {
 	Host     string
 	Port     int
 	User     string
-	Dbname   string
+	Name     string
 	Password string
 }
 
 // NewDbStore opens a connection to the specified db, updates its schema
 // and returns it wrapped into a Store.
 func NewDbStore(opt *DbOptions) (*DbStore, error) {
-	connString := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s",
+	connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
 		opt.Host,
 		opt.Port,
 		opt.User,
-		opt.Dbname,
+		opt.Name,
 		opt.Password)
 
-	db, err := gorm.Open("postgres", connString)
+	db, err := gorm.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
@@ -57,26 +60,61 @@ func NewDbStore(opt *DbOptions) (*DbStore, error) {
 	return &DbStore{db}, nil
 }
 
+// Close closes the store. Should always be called with defer.
 func (dbStore *DbStore) Close() error {
 	return dbStore.db.Close()
 }
 
+// GetAllShows returns a slice containing all the shows in the store.
+// If there are no shows, the slice will have length 0.
 func (dbStore *DbStore) GetAllShows() ([]*Show, error) {
-	return nil, nil
+	var shows []*Show
+	err := dbStore.db.Find(&shows).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return shows, nil
 }
 
+// GetShow returns the show with the given id, or error if there is no such show.
 func (dbStore *DbStore) GetShow(id uint) (*Show, error) {
-	return nil, nil
+	var show Show
+	err := dbStore.db.First(&show, id).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &show, nil
 }
 
+// CreateShow adds the given show to the store.
 func (dbStore *DbStore) CreateShow(show *Show) error {
-	return nil
+	err := dbStore.db.Create(show).Error
+	return err
 }
 
+// UpdateShow updates the show with the given id to match the given show. Returns an error
+// if the id doesn't match any show.
 func (dbStore *DbStore) UpdateShow(id uint, show *Show) error {
-	return nil
+	showToUpdate, err := dbStore.GetShow(id)
+
+	if err != nil {
+		return err
+	}
+
+	showToUpdate.ShowID = show.ShowID
+	err = dbStore.db.Save(showToUpdate).Error
+
+	return err
 }
 
+// DeleteShow deletes the show with the given id. If there is no such show,
+// will return error.
 func (dbStore *DbStore) DeleteShow(id uint) error {
-	return nil
+	var show Show
+	err := dbStore.db.First(&show, id).Delete(&show).Error
+	return err
 }

@@ -4,11 +4,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/LucaCtt/thelist/store"
 	"github.com/urfave/negroni"
 )
 
 func main() {
-	dbStore, err := NewDbStore(&DbOptions{})
+	dbStore, err := store.NewDbStore(&store.DbOptions{})
 	defer dbStore.Close()
 
 	if err != nil {
