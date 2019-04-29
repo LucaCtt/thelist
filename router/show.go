@@ -1,4 +1,4 @@
-package main
+package router
 
 import (
 	"encoding/json"
@@ -6,17 +6,13 @@ import (
 	"strconv"
 
 	"github.com/LucaCtt/thelist/store"
-	"github.com/julienschmidt/httprouter"
+	"github.com/go-chi/chi"
 )
 
-type Env struct {
-	Store store.Store
-}
+func showRouter(store store.Store) http.Handler {
+	router := chi.NewRouter()
 
-func NewRouter(store store.Store) http.Handler {
-	router := httprouter.New()
-
-	router.GET("/show", func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		shows, err := store.GetAllShows()
 		if err != nil {
 			panic(err)
@@ -25,8 +21,8 @@ func NewRouter(store store.Store) http.Handler {
 		json.NewEncoder(w).Encode(shows)
 	})
 
-	router.GET("/show/:id", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		id, err := strconv.ParseUint(ps.ByName("id"), 10, 64)
+	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 		}

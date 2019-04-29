@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/LucaCtt/thelist/router"
 	"github.com/LucaCtt/thelist/store"
-	"github.com/urfave/negroni"
 )
 
 func main() {
@@ -17,13 +17,8 @@ func main() {
 		return
 	}
 
-	router := NewRouter(dbStore)
-
-	n := negroni.New()
-	n.Use(negroni.NewRecovery())
-	n.Use(negroni.NewLogger())
-	n.UseHandler(router)
+	router := router.New(dbStore)
 
 	log.Printf("> %s\n", startMsg)
-	log.Print(http.ListenAndServe(":8080", n))
+	log.Print(http.ListenAndServe(":8080", router))
 }
