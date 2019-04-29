@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/postgres" // Postgresql driver
 )
 
 // Show represents a generic show, like a movie or a TV series.
@@ -25,6 +25,7 @@ type Store interface {
 	CreateShow(show *Show) error
 	UpdateShow(id uint, show *Show) error
 	DeleteShow(id uint) error
+	IsRecordNotFoundError(err error) bool
 }
 
 // DbStore wraps a database into a Store.
@@ -41,7 +42,7 @@ type DbOptions struct {
 	Password string
 }
 
-// NewDbStore opens a connection to the specified db, updates its schema
+// NewDbStore opens a connection to the specified postgresql db, updates its schema
 // and returns it wrapped into a Store.
 func NewDbStore(opt *DbOptions) (*DbStore, error) {
 	connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
@@ -63,6 +64,11 @@ func NewDbStore(opt *DbOptions) (*DbStore, error) {
 // Close closes the store. Should always be called with defer.
 func (dbStore *DbStore) Close() error {
 	return dbStore.db.Close()
+}
+
+// IsRecordNotFoundError returns true if error contains a RecordNotFound error.
+func (dbStore *DbStore) IsRecordNotFoundError(err error) bool {
+	return gorm.IsRecordNotFoundError(err)
 }
 
 // GetAllShows returns a slice containing all the shows in the store.

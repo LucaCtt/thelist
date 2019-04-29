@@ -17,8 +17,7 @@ func main() {
 		return
 	}
 
-	env := &Env{Store: dbStore}
-	router := NewRouter(env)
+	router := NewRouter(dbStore)
 
 	n := negroni.New()
 	n.Use(negroni.NewRecovery())
