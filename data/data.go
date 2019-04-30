@@ -1,4 +1,4 @@
-package store
+package data
 
 import (
 	"fmt"
@@ -10,10 +10,10 @@ import (
 
 // Show represents a generic show, like a movie or a TV series.
 type Show struct {
-	ID        uint
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ShowID    int
+	ID        uint      `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	ShowID    int       `json:"show_id,omitempty" gorm:"not null"`
 }
 
 // Store represents a generic data store, which can be a database, a file, and so on.
