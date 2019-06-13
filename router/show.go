@@ -3,7 +3,6 @@ package router
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/LucaCtt/thelist/data"
 	"github.com/go-chi/chi"
@@ -22,12 +21,12 @@ func showRouter(store data.Store) http.Handler {
 	})
 
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+		id, err := getIdParam(r)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 		}
 
-		show, err := store.GetShow(uint(id))
+		show, err := store.GetShow(id)
 		if err != nil {
 			if store.IsRecordNotFoundError(err) {
 				w.WriteHeader(http.StatusNotFound)
@@ -42,14 +41,12 @@ func showRouter(store data.Store) http.Handler {
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		var show data.Show
 		err := json.NewDecoder(r.Body).Decode(&show)
-
-		if err != nil {
+		if err != nil || !show.IsValid() {
 			w.WriteHeader(http.StatusNotAcceptable)
 			return
 		}
 
 		err = store.CreateShow(&show)
-
 		if err != nil {
 			panic(err)
 		}
@@ -58,12 +55,13 @@ func showRouter(store data.Store) http.Handler {
 	})
 
 	router.Delete("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+		id, err := getIdParam(r)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
+			return
 		}
 
-		err = store.DeleteShow(uint(id))
+		err = store.DeleteShow(id)
 		if err != nil {
 			if store.IsRecordNotFoundError(err) {
 				w.WriteHeader(http.StatusNotFound)

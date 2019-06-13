@@ -13,7 +13,16 @@ type Show struct {
 	ID        uint      `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	ShowID    int       `json:"show_id,omitempty" gorm:"not null"`
+	ShowID    *int      `json:"show_id" gorm:"not null"`
+}
+
+// IsValid returns true if all the show's fields have valid values.
+func (show *Show) IsValid() bool {
+	if show.ShowID == nil {
+		return false
+	}
+
+	return true
 }
 
 // Store represents a generic data store, which can be a database, a file, and so on.
