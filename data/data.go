@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres" // Postgresql driver
+	_ "github.com/jinzhu/gorm/dialects/sqlite" // SQLite driver
 )
 
 // Show represents a generic show, like a movie or a TV series.
@@ -18,11 +18,7 @@ type Show struct {
 
 // IsValid returns true if all the show's fields have valid values.
 func (show *Show) IsValid() bool {
-	if show.ShowID == nil {
-		return false
-	}
-
-	return true
+	return show.ShowID != nil
 }
 
 // Store represents a generic data store, which can be a database, a file, and so on.
@@ -44,24 +40,16 @@ type DbStore struct {
 
 // DbOptions contains the values required to connect to a database.
 type DbOptions struct {
-	Host     string
-	Port     int
-	User     string
-	Name     string
-	Password string
+	Path string
 }
 
 // NewDbStore opens a connection to the specified postgresql db, updates its schema
 // and returns it wrapped into a Store.
 func NewDbStore(opt *DbOptions) (*DbStore, error) {
-	connStr := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
-		opt.Host,
-		opt.Port,
-		opt.User,
-		opt.Name,
-		opt.Password)
+	connStr := fmt.Sprintf("file:%s",
+		opt.Path)
 
-	db, err := gorm.Open("postgres", connStr)
+	db, err := gorm.Open("sqlite3", connStr)
 	if err != nil {
 		return nil, err
 	}
