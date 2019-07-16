@@ -13,3 +13,6 @@
 
 # App binary
 thelist
+
+#Web app db
+thelist.db
