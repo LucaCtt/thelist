@@ -14,5 +14,5 @@
 # App binary
 thelist
 
-#Web app db
-thelist.db
+# App db
+*.db

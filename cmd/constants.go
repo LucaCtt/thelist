@@ -25,4 +25,8 @@ const (
 	webCmdShort    string = "Start web app"
 	webCmdLong     string = "Start the web app interface, which is composed by a web client and a REST API."
 	webCmdStartMsg string = "Server started on port %s. Press CTRL+C to stop."
+
+	addCmdUse   string = "add"
+	addCmdShort string = "Start web app"
+	addCmdLong  string = "Start the web app interface, which is composed by a web client and a REST API."
 )
