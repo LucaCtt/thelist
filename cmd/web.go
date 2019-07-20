@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/LucaCtt/thelist/constants"
 	"github.com/LucaCtt/thelist/data"
 	"github.com/LucaCtt/thelist/router"
 	"github.com/spf13/cobra"
@@ -12,7 +13,7 @@ import (
 
 func startServer() {
 	dbStore, err := data.NewDbStore(&data.DbOptions{
-		Path: viper.GetString(dbPathOption),
+		Path: viper.GetString(constants.DbPathOption),
 	})
 	defer dbStore.Close()
 
@@ -21,26 +22,26 @@ func startServer() {
 	}
 
 	router := router.New(dbStore)
-	port := viper.GetString(serverPortOption)
+	port := viper.GetString(constants.ServerPortOption)
 
-	log.Printf(webCmdStartMsg, port)
+	log.Printf(constants.WebCmdStartMsg, port)
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
 func init() {
-	webCmd.Flags().IntP(serverPortOption, serverPortShort, 0, serverPortUsage)
-	webCmd.Flags().IntP(clientPortOption, clientPortShort, 0, clientPortUsage)
+	webCmd.Flags().IntP(constants.ServerPortOption, constants.ServerPortShort, 0, constants.ServerPortUsage)
+	webCmd.Flags().IntP(constants.ClientPortOption, constants.ClientPortShort, 0, constants.ClientPortUsage)
 
-	viper.BindPFlag(serverPortOption, webCmd.Flags().Lookup(serverPortOption))
-	viper.BindPFlag(clientPortOption, webCmd.Flags().Lookup(clientPortOption))
+	viper.BindPFlag(constants.ServerPortOption, webCmd.Flags().Lookup(constants.ServerPortOption))
+	viper.BindPFlag(constants.ClientPortOption, webCmd.Flags().Lookup(constants.ClientPortOption))
 
 	rootCmd.AddCommand(webCmd)
 }
 
 var webCmd = &cobra.Command{
-	Use:   webCmdUse,
-	Short: webCmdShort,
-	Long:  webCmdLong,
+	Use:   constants.WebCmdUse,
+	Short: constants.WebCmdShort,
+	Long:  constants.WebCmdLong,
 	Run: func(cmd *cobra.Command, args []string) {
 		startServer()
 	},

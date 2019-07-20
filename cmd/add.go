@@ -4,6 +4,8 @@ import (
 	"log"
 	"strconv"
 
+	"github.com/LucaCtt/thelist/constants"
+
 	"github.com/LucaCtt/thelist/data"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -14,13 +16,13 @@ func init() {
 }
 
 var addCmd = &cobra.Command{
-	Use:   addCmdUse,
-	Short: addCmdShort,
-	Long:  addCmdLong,
+	Use:   constants.AddCmdUse,
+	Short: constants.AddCmdShort,
+	Long:  constants.AddCmdLong,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		dbStore, err := data.NewDbStore(&data.DbOptions{
-			Path: viper.GetString(dbPathOption),
+			Path: viper.GetString(constants.DbPathOption),
 		})
 		defer dbStore.Close()
 
