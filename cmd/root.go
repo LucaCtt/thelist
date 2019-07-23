@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/LucaCtt/thelist/constants"
-	"github.com/ryanbradynd05/go-tmdb"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -18,6 +17,9 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	rootCmd.PersistentFlags().StringP(constants.APIKeyOption, constants.APIKeyShort, "", constants.APIKeyUsage)
+	viper.BindPFlag(constants.APIKeyOption, rootCmd.PersistentFlags().Lookup(constants.APIKeyOption))
+
 	// Viper configuration and defaults.
 	viper.SetDefault(constants.ServerPortOption, constants.ServerPortDefault)
 	viper.SetDefault(constants.ClientPortOption, constants.ClientPortDefault)
@@ -40,7 +42,3 @@ func Execute() {
 		os.Exit(1)
 	}
 }
-
-var APIClient = tmdb.Init(tmdb.Config{
-	APIKey: viper.GetString(constants.APIKeyOption),
-})

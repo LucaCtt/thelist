@@ -16,6 +16,9 @@ const (
 	ClientPortDefault = "8000"
 	ClientPortShort   = "p"
 	ClientPortUsage   = "Web client port"
+	APIKeyOption      = "key"
+	APIKeyShort       = "k"
+	APIKeyUsage       = "TMDB api key"
 
 	RootCmdUse   = AppName
 	RootCmdShort = AppName + " is an app for listing shows to watch."
@@ -29,6 +32,4 @@ const (
 	AddCmdUse   = "add"
 	AddCmdShort = "Start web app"
 	AddCmdLong  = "Start the web app interface, which is composed by a web client and a REST API."
-
-	APIKeyOption = "key"
 )
