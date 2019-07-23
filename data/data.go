@@ -14,6 +14,7 @@ type Show struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	ShowID    *int      `json:"show_id" gorm:"not null"`
+	Watched   bool      `json:"watched"`
 }
 
 // IsValid returns true if all the show's fields have valid values.

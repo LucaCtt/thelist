@@ -25,6 +25,9 @@ func promptShow(args []string) (string, error) {
 
 	prompt := promptui.Prompt{
 		Label: "Show name",
+		Templates: &promptui.PromptTemplates{
+			Success: fmt.Sprintf("%s {{ . | bold | green }} ", promptui.IconGood),
+		},
 	}
 
 	show, err := prompt.Run()
@@ -59,10 +62,9 @@ func selectShow(shows *api.ShowSearchResult) (int, error) {
 }
 
 var templates = &promptui.SelectTemplates{
-	Label:    "{{ . }}:",
-	Active:   "\u2B95 {{ .Name | cyan }}",
+	Active:   fmt.Sprintf("%s {{ .Name | cyan | underline }}", promptui.IconSelect),
 	Inactive: "  {{ .Name | cyan }}",
-	Selected: "\u2B95 {{ .Name | red | cyan }}",
+	Selected: fmt.Sprintf("%s {{ .Name | bold | green }}", promptui.IconGood),
 	Details: `
 {{ "Name:" | faint }}	{{ .Name }}
 {{ "Release Date:" | faint }}	{{ .ReleaseDate }}
