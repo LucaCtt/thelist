@@ -1,18 +1,24 @@
-package cmd
+//go:generate mockgen -destination=../mocks/mock_prompt.go -package=mocks github.com/LucaCtt/thelist/util Prompt
+
+package util
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/LucaCtt/thelist/api"
+	"github.com/LucaCtt/thelist/data"
 	"github.com/manifoldco/promptui"
 )
 
-func promptShow(args []string) (string, error) {
-	if len(args) != 0 {
-		return args[0], nil
-	}
+type Prompt interface {
+	PromptShow() (string, error)
+	SelectShow(shows *data.ShowList) (*data.Show, error)
+}
 
+type CliPrompt struct {
+}
+
+func (c *CliPrompt) PromptShow() (string, error) {
 	prompt := promptui.Prompt{
 		Label: "Show name",
 		Templates: &promptui.PromptTemplates{
@@ -28,13 +34,13 @@ func promptShow(args []string) (string, error) {
 	return show, nil
 }
 
-func selectShow(shows *api.ShowSearchResult) (int, error) {
+func (c *CliPrompt) SelectShow(shows *data.ShowList) (*data.Show, error) {
 	if shows.TotalResults == 0 {
-		return 0, fmt.Errorf("No shows found")
+		return nil, fmt.Errorf("No shows found")
 	}
 
 	if shows.TotalResults == 1 {
-		return shows.Results[0].ID, nil
+		return shows.Results[0], nil
 	}
 
 	prompt := promptui.Select{
@@ -45,10 +51,10 @@ func selectShow(shows *api.ShowSearchResult) (int, error) {
 	}
 	i, _, err := prompt.Run()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return i, nil
+	return shows.Results[i], nil
 }
 
 var templates = &promptui.SelectTemplates{
@@ -62,7 +68,7 @@ var templates = &promptui.SelectTemplates{
 {{ "Vote Average:" | faint }}	{{ .VoteAverage}}`,
 }
 
-func searcher(shows []*api.ShowSearchInfo) func(string, int) bool {
+func searcher(shows []*data.Show) func(string, int) bool {
 	return func(input string, index int) bool {
 		show := shows[index]
 

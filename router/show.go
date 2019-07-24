@@ -12,12 +12,12 @@ func showRouter(store data.Store) http.Handler {
 	router := chi.NewRouter()
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		shows, err := store.GetAllShows()
+		items, err := store.GetAllItems()
 		if err != nil {
 			panic(err)
 		}
 
-		json.NewEncoder(w).Encode(shows)
+		json.NewEncoder(w).Encode(items)
 	})
 
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,7 @@ func showRouter(store data.Store) http.Handler {
 			w.WriteHeader(http.StatusNotFound)
 		}
 
-		show, err := store.GetShow(id)
+		show, err := store.GetItem(id)
 		if err != nil {
 			if store.IsRecordNotFoundError(err) {
 				w.WriteHeader(http.StatusNotFound)
@@ -39,14 +39,14 @@ func showRouter(store data.Store) http.Handler {
 	})
 
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		var show data.Show
+		var show data.Item
 		err := json.NewDecoder(r.Body).Decode(&show)
 		if err != nil || !show.IsValid() {
 			w.WriteHeader(http.StatusNotAcceptable)
 			return
 		}
 
-		err = store.CreateShow(&show)
+		err = store.CreateItem(&show)
 		if err != nil {
 			panic(err)
 		}
@@ -61,7 +61,7 @@ func showRouter(store data.Store) http.Handler {
 			return
 		}
 
-		err = store.DeleteShow(id)
+		err = store.DeleteItem(id)
 		if err != nil {
 			if store.IsRecordNotFoundError(err) {
 				w.WriteHeader(http.StatusNotFound)

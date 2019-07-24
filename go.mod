@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/go-chi/chi v4.0.2+incompatible
+	github.com/golang/mock v1.3.1
 	github.com/jinzhu/gorm v1.9.10
 	github.com/kylelemons/go-gypsy v0.0.0-20160905020020-08cad365cd28 // indirect
 	github.com/manifoldco/promptui v0.3.2

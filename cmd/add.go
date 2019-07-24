@@ -3,8 +3,8 @@ package cmd
 import (
 	"log"
 
-	"github.com/LucaCtt/thelist/api"
 	"github.com/LucaCtt/thelist/constants"
+	"github.com/LucaCtt/thelist/util"
 
 	"github.com/LucaCtt/thelist/data"
 	"github.com/spf13/cobra"
@@ -13,6 +13,38 @@ import (
 
 func init() {
 	rootCmd.AddCommand(addCmd)
+}
+
+func add(args []string, prompt util.Prompt, client util.Client, store data.Store) error {
+	name := ""
+
+	if len(args) != 0 {
+		name = args[0]
+	} else {
+		input, err := prompt.PromptShow()
+		if err != nil {
+			return err
+		}
+		name = input
+	}
+
+	searchResult, err := client.SearchShow(name)
+	if err != nil {
+		return err
+	}
+
+	selectedShow, err := prompt.SelectShow(searchResult)
+	if err != nil {
+		return err
+	}
+
+	showID := selectedShow.ID
+	err = store.CreateItem(&data.Item{ShowID: &showID})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 var addCmd = &cobra.Command{
@@ -29,25 +61,9 @@ var addCmd = &cobra.Command{
 		}
 		defer dbStore.Close()
 
-		client := api.NewClient(viper.GetString(constants.APIKeyOption))
+		client := util.NewAPIClient(viper.GetString(constants.APIKeyOption))
 
-		show, err := promptShow(args)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		shows, err := client.SearchShow(show)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		i, err := selectShow(shows)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		showID := shows.Results[i].ID
-		err = dbStore.CreateShow(&data.Show{ShowID: &showID})
+		err = add(args, &util.CliPrompt{}, client, dbStore)
 		if err != nil {
 			log.Fatal(err)
 		}
