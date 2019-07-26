@@ -31,6 +31,14 @@ type DbOptions struct {
 	Path string
 }
 
+// ErrRecordNotFound is the error returned if when a record is not found by query.
+var ErrRecordNotFound = gorm.ErrRecordNotFound
+
+// IsRecordNotFoundError returns true if err contains a RecordNotFound error.
+func IsRecordNotFoundError(err error) bool {
+	return gorm.IsRecordNotFoundError(err)
+}
+
 // NewDbStore opens a connection to the specified postgresql db, updates its schema
 // and returns it wrapped into a Store.
 func NewDbStore(opt *DbOptions) (*DbStore, error) {
@@ -49,11 +57,6 @@ func NewDbStore(opt *DbOptions) (*DbStore, error) {
 // Close closes the store. Should be called with defer.
 func (dbStore *DbStore) Close() error {
 	return dbStore.db.Close()
-}
-
-// IsRecordNotFoundError returns true if err contains a RecordNotFound error.
-func (dbStore *DbStore) IsRecordNotFoundError(err error) bool {
-	return gorm.IsRecordNotFoundError(err)
 }
 
 // GetAllItems returns a slice containing all the items in the store.
