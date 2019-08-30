@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/LucaCtt/thelist/constants"
+	"github.com/lucactt/thelist/constants"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

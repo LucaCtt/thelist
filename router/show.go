@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/LucaCtt/thelist/data"
+	"github.com/lucactt/thelist/data"
 	"github.com/go-chi/chi"
 )
 
@@ -21,7 +21,7 @@ func showRouter(store data.Store) http.Handler {
 	})
 
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIdParam(r)
+		id, err := getIDParam(r)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -55,7 +55,7 @@ func showRouter(store data.Store) http.Handler {
 	})
 
 	router.Delete("/{id}", func(w http.ResponseWriter, r *http.Request) {
-		id, err := getIdParam(r)
+		id, err := getIDParam(r)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			return

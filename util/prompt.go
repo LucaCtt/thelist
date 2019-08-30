@@ -1,4 +1,4 @@
-//go:generate mockgen -destination=../mocks/mock_prompt.go -package=mocks github.com/LucaCtt/thelist/util Prompt
+//go:generate mockgen -destination=../mocks/mock_prompt.go -package=mocks github.com/lucactt/thelist/util Prompt
 
 package util
 
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/LucaCtt/thelist/data"
+	"github.com/lucactt/thelist/data"
 	"github.com/manifoldco/promptui"
 )
 

@@ -1,10 +1,10 @@
-package router 
+package router
 
 import (
 	"net/http"
 	"strconv"
 
-	"github.com/LucaCtt/thelist/data"
+	"github.com/lucactt/thelist/data"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 )
@@ -25,18 +25,18 @@ func New(store data.Store) http.Handler {
 }
 
 func contentTypeMiddleware(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
-    next.ServeHTTP(w, r)
-  })
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
 }
 
-func getIdParam(r *http.Request) (uint, error) {
-		id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
+func getIDParam(r *http.Request) (uint, error) {
+	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 
-		if err != nil {
-			return 0, err
-		}
+	if err != nil {
+		return 0, err
+	}
 
-		return uint(id), nil
+	return uint(id), nil
 }

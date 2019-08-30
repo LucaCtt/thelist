@@ -3,10 +3,10 @@ package cmd
 import (
 	"log"
 
-	"github.com/LucaCtt/thelist/constants"
-	"github.com/LucaCtt/thelist/util"
+	"github.com/lucactt/thelist/constants"
+	"github.com/lucactt/thelist/util"
 
-	"github.com/LucaCtt/thelist/data"
+	"github.com/lucactt/thelist/data"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

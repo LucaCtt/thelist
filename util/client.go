@@ -1,9 +1,9 @@
-//go:generate mockgen -destination=../mocks/mock_client.go -package=mocks github.com/LucaCtt/thelist/util Client
+//go:generate mockgen -destination=../mocks/mock_client.go -package=mocks github.com/lucactt/thelist/util Client
 
 package util
 
 import (
-	"github.com/LucaCtt/thelist/data"
+	"github.com/lucactt/thelist/data"
 	"github.com/ryanbradynd05/go-tmdb"
 )
 

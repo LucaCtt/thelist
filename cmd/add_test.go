@@ -3,8 +3,8 @@ package cmd
 import (
 	"testing"
 
-	"github.com/LucaCtt/thelist/data"
-	"github.com/LucaCtt/thelist/mocks"
+	"github.com/lucactt/thelist/data"
+	"github.com/lucactt/thelist/mocks"
 	"github.com/golang/mock/gomock"
 )
 
