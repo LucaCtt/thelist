@@ -1,24 +1,22 @@
-//go:generate mockgen -destination=../mocks/mock_store.go -package=mocks github.com/LucaCtt/thelist/data Store
+//go:generate mockgen -destination=../mocks/mock_store.go -package=mocks github.com/lucactt/thelist/data Store
 
 package data
 
 import (
-	"fmt"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite" // SQLite driver
+	"github.com/pkg/errors"
 )
 
 // Store represents a generic data store, which can be a database, a file, and so on.
 // The Close method should always be called to close the store.
 type Store interface {
 	Close() error
-	GetAllItems() ([]*Item, error)
-	GetItem(id uint) (*Item, error)
-	CreateItem(item *Item) error
+	All() ([]Item, error)
+	Get(id uint) (*Item, error)
+	Create(item *Item) error
 	SetWatched(id uint, watched bool) error
-	DeleteItem(id uint) error
-	IsRecordNotFoundError(err error) bool
+	Delete(id uint) error
 }
 
 // DbStore wraps a database into a Store.
@@ -31,23 +29,12 @@ type DbOptions struct {
 	Path string
 }
 
-// ErrRecordNotFound is the error returned if when a record is not found by query.
-var ErrRecordNotFound = gorm.ErrRecordNotFound
-
-// IsRecordNotFoundError returns true if err contains a RecordNotFound error.
-func IsRecordNotFoundError(err error) bool {
-	return gorm.IsRecordNotFoundError(err)
-}
-
 // NewDbStore opens a connection to the specified postgresql db, updates its schema
 // and returns it wrapped into a Store.
 func NewDbStore(opt *DbOptions) (*DbStore, error) {
-	connStr := fmt.Sprintf("file:%s",
-		opt.Path)
-
-	db, err := gorm.Open("sqlite3", connStr)
+	db, err := gorm.Open("sqlite3", opt.Path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "create db store failed")
 	}
 
 	db.AutoMigrate(&Item{})
@@ -55,56 +42,76 @@ func NewDbStore(opt *DbOptions) (*DbStore, error) {
 }
 
 // Close closes the store. Should be called with defer.
-func (dbStore *DbStore) Close() error {
-	return dbStore.db.Close()
+func (s *DbStore) Close() error {
+	err := s.db.Close()
+
+	if err != nil {
+		return errors.Wrap(err, "close db store failed")
+	}
+	return nil
 }
 
-// GetAllItems returns a slice containing all the items in the store.
+// All returns a slice containing all the items in the store.
 // If there are no items, the slice will have length 0.
-func (dbStore *DbStore) GetAllItems() ([]*Item, error) {
-	var items []*Item
-	err := dbStore.db.Find(&items).Error
+func (s *DbStore) All() ([]Item, error) {
+	var items []Item
+	err := s.db.Find(&items).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get all items failed")
 	}
 
 	return items, nil
 }
 
-// GetItem returns the item with the given id, or error if there is no such item.
-func (dbStore *DbStore) GetItem(id uint) (*Item, error) {
+// First returns the item with the given id, or error if there is no such item.
+func (s *DbStore) First(id uint) (*Item, error) {
 	var item Item
-	err := dbStore.db.First(&item, id).Error
+	err := s.db.First(&item, id).Error
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "find item failed")
 	}
 
 	return &item, nil
 }
 
-// CreateItem adds the given show to the store.
-func (dbStore *DbStore) CreateItem(item *Item) error {
-	err := dbStore.db.Create(item).Error
-	return err
+// Create adds the given show to the store.
+func (s *DbStore) Create(item *Item) error {
+	err := s.db.Create(item).Error
+	if err != nil {
+		return errors.Wrap(err, "create item failed")
+	}
+
+	return nil
 }
 
 // SetWatched sets the "Watched" field of the item with the given id to the value passed as argument.
-func (dbStore *DbStore) SetWatched(id uint, watched bool) error {
-	item, err := dbStore.GetItem(id)
+func (s *DbStore) SetWatched(id uint, watched bool) error {
+	item, err := s.First(id)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "find item to set watched failed")
 	}
 
 	item.Watched = watched
-	err = dbStore.db.Save(item).Error
+	err = s.db.Save(item).Error
+	if err != nil {
+		return errors.Wrap(err, "set watched failed")
+	}
 
 	return err
 }
 
-// DeleteItem deletes the item with the given id. If there is no such item, it
+// Delete deletes the item with the given id. If there is no such item, it
 // will return an error.
-func (dbStore *DbStore) DeleteItem(id uint) error {
-	var item Item
-	err := dbStore.db.First(&item, id).Delete(&item).Error
+func (s *DbStore) Delete(id uint) error {
+	item, err := s.First(id)
+	if err != nil {
+		return errors.Wrap(err, "find item to delete failed")
+	}
+
+	err = s.db.Delete(item).Error
+	if err != nil {
+		return errors.Wrap(err, "delete item failed")
+	}
+
 	return err
 }

@@ -1,32 +1,45 @@
+//go:generate mockgen -destination=../mocks/mock_store.go -package=mocks github.com/lucactt/thelist/data Store
+
 package data
 
 import (
-	"errors"
+	"reflect"
 	"testing"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
-var opt = &DbOptions{Path: ":memory:"}
+func assertErr(t *testing.T, got error, want bool) {
+	if (got != nil) != want {
+		t.Errorf("error = %v, wantErr %v", got, want)
+	}
+}
 
-func TestIsRecordNotFoundError(t *testing.T) {
-	type args struct {
-		err error
+func assertEquals(t *testing.T, got, want *Item) {
+	t.Helper()
+	if got == nil && want == nil {
+		return
 	}
-	tests := []struct {
-		name string
-		args *args
-		want bool
-	}{
-		{"Empty error", &args{errors.New("")}, false},
-		{"RecordNotFoundError", &args{ErrRecordNotFound}, true},
-		{"Not RecordNotFoundError", &args{errors.New("abcd")}, false},
+
+	if got.ShowID != want.ShowID || got.Watched != want.Watched {
+		t.Errorf("got %v, want %v", got, want)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := IsRecordNotFoundError(tt.args.err); got != tt.want {
-				t.Errorf("DbStore.IsRecordNotFoundError() = %v, want %v", got, tt.want)
-			}
-		})
+}
+
+func assertEqualsAll(t *testing.T, got, want []Item) {
+	t.Helper()
+	for i, item := range got {
+		assertEquals(t, &item, &want[i])
 	}
+}
+
+func makeItems(ids ...int) []Item {
+	result := make([]Item, len(ids))
+	for i, id := range ids {
+		result[i] = Item{ShowID: id}
+	}
+	return result
 }
 
 func TestNewDbStore(t *testing.T) {
@@ -35,12 +48,11 @@ func TestNewDbStore(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		args    *args
-		wantDb  bool
+		args    args
+		want    *DbStore
 		wantErr bool
 	}{
-		{"Valid db", &args{opt}, true, false},
-		{"Invalid db", &args{&DbOptions{Path: "/bush/did/9/11"}}, false, true},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -49,170 +61,151 @@ func TestNewDbStore(t *testing.T) {
 				t.Errorf("NewDbStore() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if (got != nil) != tt.wantDb {
-				t.Errorf("NewDbStore() got = %v, wantDb %v", err, tt.wantDb)
-				return
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewDbStore() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
 func TestDbStore_Close(t *testing.T) {
-	valid, _ := NewDbStore(opt)
-	closed, _ := NewDbStore(opt)
-	closed.Close()
 	tests := []struct {
 		name    string
-		dbStore *DbStore
 		wantErr bool
 	}{
-		{"Valid store", valid, false},
-		{"Store already closed", closed, false},
+		{"no error", false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.dbStore.Close(); (err != nil) != tt.wantErr {
-				t.Errorf("DbStore.Close() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			s, err := NewDbStore(&DbOptions{":memory:"})
+			err = s.Close()
+			assertErr(t, err, tt.wantErr)
 		})
 	}
 }
 
-func TestDbStore_GetAllItems(t *testing.T) {
-	emptyStore, _ := NewDbStore(opt)
-	notEmptyStore, _ := NewDbStore(opt)
-	data := []*Item{&Item{ShowID: p(1)}, &Item{ShowID: p(2)}}
-	for i := 0; i < len(data); i++ {
-		notEmptyStore.CreateItem(data[i])
-	}
-
+func TestDbStore_All(t *testing.T) {
 	tests := []struct {
 		name    string
-		dbStore *DbStore
-		want    []*Item
+		items   []Item
+		want    []Item
 		wantErr bool
 	}{
-		{"Empty store", emptyStore, []*Item{}, false},
-		{"Items in store", notEmptyStore, data, false},
+		{"empty db", []Item{}, []Item{}, false},
+		{"items in db", makeItems(1, 2), makeItems(1, 2), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.dbStore.GetAllItems()
-			if (err != nil) != tt.wantErr {
-				t.Errorf("DbStore.GetAllItems() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			s, err := NewDbStore(&DbOptions{":memory:"})
+			defer s.Close()
+
+			for _, i := range tt.items {
+				s.Create(&i)
 			}
-			if len(got) != len(tt.want) {
-				t.Errorf("DbStore.GetAllItems() = %v, want %v", got, tt.want)
-			}
+
+			got, err := s.All()
+			assertErr(t, err, tt.wantErr)
+			assertEqualsAll(t, got, tt.want)
 		})
 	}
 }
 
-func TestDbStore_GetItem(t *testing.T) {
-	emptyStore, _ := NewDbStore(opt)
-	notEmptyStore, _ := NewDbStore(opt)
-	notEmptyStore.CreateItem(&Item{ShowID: p(1)})
-
-	type args struct {
-		id uint
-	}
+func TestDbStore_First(t *testing.T) {
 	tests := []struct {
-		name     string
-		dbStore  *DbStore
-		args     *args
-		wantData bool
-		wantErr  bool
+		name    string
+		items   []Item
+		id      uint
+		want    *Item
+		wantErr bool
 	}{
-		{"Item exists", notEmptyStore, &args{1}, true, false},
-		{"Item doesn't exist", emptyStore, &args{1}, false, true},
+		{"item doesn't exist", []Item{}, 1, nil, true},
+		{"item exists", makeItems(1), 1, &Item{ShowID: 1, Watched: false}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.dbStore.GetItem(tt.args.id)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("DbStore.GetItem() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			s, err := NewDbStore(&DbOptions{":memory:"})
+			defer s.Close()
+
+			for _, i := range tt.items {
+				s.Create(&i)
 			}
-			if (got != nil) != tt.wantData {
-				t.Errorf("DbStore.GetItem() item = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+
+			got, err := s.First(tt.id)
+			assertErr(t, err, tt.wantErr)
+			assertEquals(t, got, tt.want)
 		})
 	}
 }
 
-func TestDbStore_CreateItem(t *testing.T) {
-	store, _ := NewDbStore(opt)
-	type args struct {
-		item *Item
-	}
+func TestDbStore_Create(t *testing.T) {
 	tests := []struct {
 		name    string
-		dbStore *DbStore
-		args    *args
+		item    *Item
 		wantErr bool
 	}{
-		{"Valid item", store, &args{&Item{ShowID: p(1)}}, false},
-		{"Invalid item", store, &args{&Item{}}, true},
+		{"valid item", &Item{ShowID: 1}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.dbStore.CreateItem(tt.args.item); (err != nil) != tt.wantErr {
-				t.Errorf("DbStore.CreateItem() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			s, err := NewDbStore(&DbOptions{":memory:"})
+			defer s.Close()
+
+			err = s.Create(tt.item)
+			assertErr(t, err, tt.wantErr)
 		})
 	}
 }
 
 func TestDbStore_SetWatched(t *testing.T) {
-	emptyStore, _ := NewDbStore(opt)
-	notEmptyStore, _ := NewDbStore(opt)
-	item := &Item{ShowID: p(1)}
-	notEmptyStore.CreateItem(item)
+	type fields struct {
+		db *gorm.DB
+	}
 	type args struct {
 		id      uint
 		watched bool
 	}
 	tests := []struct {
 		name    string
-		dbStore *DbStore
-		args    *args
+		fields  fields
+		args    args
 		wantErr bool
 	}{
-		{"Item exists", notEmptyStore, &args{item.ID, true}, false},
-		{"Item doesn't exists", emptyStore, &args{item.ID, true}, true},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.dbStore.SetWatched(tt.args.id, tt.args.watched); (err != nil) != tt.wantErr {
+			s := &DbStore{
+				db: tt.fields.db,
+			}
+			if err := s.SetWatched(tt.args.id, tt.args.watched); (err != nil) != tt.wantErr {
 				t.Errorf("DbStore.SetWatched() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-func TestDbStore_DeleteItem(t *testing.T) {
-	emptyStore, _ := NewDbStore(opt)
-	notEmptyStore, _ := NewDbStore(opt)
-	item := &Item{ShowID: p(1)}
-	notEmptyStore.CreateItem(item)
+func TestDbStore_Delete(t *testing.T) {
+	type fields struct {
+		db *gorm.DB
+	}
 	type args struct {
 		id uint
 	}
 	tests := []struct {
 		name    string
-		dbStore *DbStore
-		args    *args
+		fields  fields
+		args    args
 		wantErr bool
 	}{
-		{"Item exists", notEmptyStore, &args{item.ID}, false},
-		{"Item doesn't exist", emptyStore, &args{item.ID}, true},
+		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := tt.dbStore.DeleteItem(tt.args.id); (err != nil) != tt.wantErr {
-				t.Errorf("DbStore.DeleteItem() error = %v, wantErr %v", err, tt.wantErr)
+			s := &DbStore{
+				db: tt.fields.db,
+			}
+			if err := s.Delete(tt.args.id); (err != nil) != tt.wantErr {
+				t.Errorf("DbStore.Delete() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
