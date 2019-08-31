@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/lucactt/thelist/data"
 	"github.com/go-chi/chi"
+	"github.com/lucactt/thelist/data"
 )
 
 func showRouter(store data.Store) http.Handler {
 	router := chi.NewRouter()
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		items, err := store.GetAllItems()
+		items, err := store.All()
 		if err != nil {
 			panic(err)
 		}
@@ -26,12 +26,8 @@ func showRouter(store data.Store) http.Handler {
 			w.WriteHeader(http.StatusNotFound)
 		}
 
-		show, err := store.GetItem(id)
+		show, err := store.Get(id)
 		if err != nil {
-			if store.IsRecordNotFoundError(err) {
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
 			panic(err)
 		}
 
@@ -41,12 +37,12 @@ func showRouter(store data.Store) http.Handler {
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		var show data.Item
 		err := json.NewDecoder(r.Body).Decode(&show)
-		if err != nil || !show.IsValid() {
+		if err != nil {
 			w.WriteHeader(http.StatusNotAcceptable)
 			return
 		}
 
-		err = store.CreateItem(&show)
+		err = store.Create(&show)
 		if err != nil {
 			panic(err)
 		}
@@ -61,12 +57,8 @@ func showRouter(store data.Store) http.Handler {
 			return
 		}
 
-		err = store.DeleteItem(id)
+		err = store.Delete(id)
 		if err != nil {
-			if store.IsRecordNotFoundError(err) {
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
 			panic(err)
 		}
 

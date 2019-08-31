@@ -12,9 +12,7 @@ import (
 )
 
 func startServer() {
-	dbStore, err := data.NewDbStore(&data.DbOptions{
-		Path: viper.GetString(constants.DbPathOption),
-	})
+	dbStore, err := data.NewDbStore(viper.GetString(constants.DbPathOption))
 	defer dbStore.Close()
 
 	if err != nil {

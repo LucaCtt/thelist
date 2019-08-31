@@ -39,7 +39,7 @@ func add(args []string, prompt util.Prompt, client util.Client, store data.Store
 	}
 
 	showID := selectedShow.ID
-	err = store.CreateItem(&data.Item{ShowID: &showID})
+	err = store.Create(&data.Item{ShowID: showID})
 	if err != nil {
 		return err
 	}
@@ -53,9 +53,7 @@ var addCmd = &cobra.Command{
 	Long:  constants.AddCmdLong,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		dbStore, err := data.NewDbStore(&data.DbOptions{
-			Path: viper.GetString(constants.DbPathOption),
-		})
+		dbStore, err := data.NewDbStore(viper.GetString(constants.DbPathOption))
 		if err != nil {
 			log.Fatal(err)
 		}

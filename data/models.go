@@ -18,6 +18,6 @@ type Show struct {
 
 // ShowList represents a list of shows.
 type ShowList struct {
-	Results      []Show
+	Results      []*Show
 	TotalResults int
 }

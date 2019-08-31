@@ -13,7 +13,7 @@ import (
 // The Close method should always be called to close the store.
 type Store interface {
 	Close() error
-	All() ([]Item, error)
+	All() ([]*Item, error)
 	Get(id uint) (*Item, error)
 	Create(item *Item) error
 	SetWatched(id uint, watched bool) error
@@ -63,21 +63,21 @@ func (s *DbStore) Close() error {
 
 // All returns a slice containing all the items in the store.
 // If there are no items, the slice will have length 0.
-func (s *DbStore) All() ([]Item, error) {
+func (s *DbStore) All() ([]*Item, error) {
 	rows, err := s.db.Query("SELECT * FROM items")
 	if err != nil {
 		return nil, errors.Wrap(err, "query to get all items failed")
 	}
 	defer rows.Close()
 
-	var items []Item
+	var items []*Item
 	for rows.Next() {
 		var item Item
 		err = rows.Scan(&item.ID, &item.ShowID, &item.Watched)
 		if err != nil {
 			return nil, errors.Wrap(err, "scanning item row failed")
 		}
-		items = append(items, item)
+		items = append(items, &item)
 	}
 
 	if rows.Err() != nil {
