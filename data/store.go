@@ -4,6 +4,7 @@ package data
 
 import (
 	"database/sql"
+	"fmt"
 
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 	"github.com/pkg/errors"
@@ -30,12 +31,12 @@ type DbStore struct {
 func NewDbStore(path string) (*DbStore, error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
-		return nil, errors.Wrap(err, "open db failed")
+		return nil, errors.Wrap(err, fmt.Sprintf("open db at path %q failed", path))
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return nil, errors.Wrap(err, "ping db failed")
+		return nil, errors.Wrap(err, fmt.Sprintf("ping db at path %q failed", path))
 	}
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS items (
@@ -44,7 +45,7 @@ func NewDbStore(path string) (*DbStore, error) {
 		watched BOOLEAN NOT NULL CHECK (watched IN (0,1))
 		)`)
 	if err != nil {
-		return nil, errors.Wrap(err, "create table failed")
+		return nil, errors.Wrap(err, "query to create items table failed")
 	}
 
 	return &DbStore{db}, nil
@@ -81,7 +82,7 @@ func (s *DbStore) All() ([]*Item, error) {
 	}
 
 	if rows.Err() != nil {
-		return nil, errors.Wrap(err, "item rows error")
+		return nil, errors.Wrap(err, "item iteration error")
 	}
 
 	return items, nil
@@ -92,7 +93,7 @@ func (s *DbStore) Get(id uint) (*Item, error) {
 	var item Item
 	err := s.db.QueryRow("SELECT * FROM items WHERE id = ?", id).Scan(&item.ID, &item.ShowID, &item.Watched)
 	if err != nil {
-		return nil, errors.Wrap(err, "query to get item failed")
+		return nil, errors.Wrap(err, fmt.Sprintf("query to get item with id %d failed", id))
 	}
 
 	return &item, nil
@@ -102,7 +103,7 @@ func (s *DbStore) Get(id uint) (*Item, error) {
 func (s *DbStore) Create(item *Item) error {
 	_, err := s.db.Exec(`INSERT INTO items (show_id, watched) VALUES (? ,?)`, item.ShowID, item.Watched)
 	if err != nil {
-		return errors.Wrap(err, "create item failed")
+		return errors.Wrap(err, fmt.Sprintf("create item %+v failed", item))
 	}
 
 	return nil
@@ -118,15 +119,15 @@ func (s *DbStore) SetWatched(id uint, watched bool) error {
 
 	r, err := s.db.Exec("UPDATE items SET watched = ? WHERE id = ?", value, id)
 	if err != nil {
-		return errors.Wrap(err, "update item failed")
+		return errors.Wrap(err, fmt.Sprintf("set watched of item with id %d to %t failed", id, watched))
 	}
 
 	affected, err := r.RowsAffected()
 	if err != nil {
-		return errors.Wrap(err, "retrieving affected rows failed")
+		return errors.Wrap(err, "retrieve affected rows failed")
 	}
 	if affected == 0 {
-		return errors.New("item not found")
+		return fmt.Errorf("item with id %d not found", id)
 	}
 
 	return nil
@@ -137,7 +138,7 @@ func (s *DbStore) SetWatched(id uint, watched bool) error {
 func (s *DbStore) Delete(id uint) error {
 	r, err := s.db.Exec("DELETE FROM items WHERE id = ?", id)
 	if err != nil {
-		return errors.Wrap(err, "delete item failed")
+		return errors.Wrap(err, fmt.Sprintf("delete item with id %d failed", id))
 	}
 
 	affected, err := r.RowsAffected()
@@ -145,7 +146,7 @@ func (s *DbStore) Delete(id uint) error {
 		return errors.Wrap(err, "retrieving affected rows failed")
 	}
 	if affected == 0 {
-		return errors.New("item not found")
+		return fmt.Errorf("item with id %d not found", id)
 	}
 
 	return nil
