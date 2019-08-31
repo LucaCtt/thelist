@@ -1,16 +1,10 @@
 package data
 
-import (
-	"time"
-)
-
 // Item represents an item of the show list.
 type Item struct {
-	ID        uint      `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	ShowID    int       `json:"show_id"`
-	Watched   bool      `json:"watched"`
+	ID      uint `json:"id"`
+	ShowID  int  `json:"show_id"`
+	Watched bool `json:"watched"`
 }
 
 // Show represents a movie or a tv series.

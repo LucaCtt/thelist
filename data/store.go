@@ -3,8 +3,9 @@
 package data
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite" // SQLite driver
+	"database/sql"
+
+	_ "github.com/mattn/go-sqlite3" // SQLite driver
 	"github.com/pkg/errors"
 )
 
@@ -21,32 +22,41 @@ type Store interface {
 
 // DbStore wraps a database into a Store.
 type DbStore struct {
-	db *gorm.DB
+	db *sql.DB
 }
 
-// DbOptions contains the values required to connect to a database.
-type DbOptions struct {
-	Path string
-}
-
-// NewDbStore opens a connection to the specified postgresql db, updates its schema
-// and returns it wrapped into a Store.
-func NewDbStore(opt *DbOptions) (*DbStore, error) {
-	db, err := gorm.Open("sqlite3", opt.Path)
+// NewDbStore creates a store that uses an SQLite db.
+// If the tables do not already exist on the db, they will be created.
+func NewDbStore(path string) (*DbStore, error) {
+	db, err := sql.Open("sqlite3", path)
 	if err != nil {
-		return nil, errors.Wrap(err, "create db store failed")
+		return nil, errors.Wrap(err, "open db failed")
 	}
 
-	db.AutoMigrate(&Item{})
+	err = db.Ping()
+	if err != nil {
+		return nil, errors.Wrap(err, "ping db failed")
+	}
+
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS items (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		show_id INTEGER NOT NULL,
+		watched BOOLEAN NOT NULL CHECK (watched IN (0,1))
+		)`)
+	if err != nil {
+		return nil, errors.Wrap(err, "create table failed")
+	}
+
 	return &DbStore{db}, nil
 }
 
-// Close closes the store. Should be called with defer.
+// Close closes the store. Should be deferred.
+// Closing multiple times a store has no effect.
 func (s *DbStore) Close() error {
 	err := s.db.Close()
 
 	if err != nil {
-		return errors.Wrap(err, "close db store failed")
+		return errors.Wrap(err, "close db failed")
 	}
 	return nil
 }
@@ -54,29 +64,43 @@ func (s *DbStore) Close() error {
 // All returns a slice containing all the items in the store.
 // If there are no items, the slice will have length 0.
 func (s *DbStore) All() ([]Item, error) {
-	var items []Item
-	err := s.db.Find(&items).Error
+	rows, err := s.db.Query("SELECT * FROM items")
 	if err != nil {
-		return nil, errors.Wrap(err, "get all items failed")
+		return nil, errors.Wrap(err, "query to get all items failed")
+	}
+	defer rows.Close()
+
+	var items []Item
+	for rows.Next() {
+		var item Item
+		err = rows.Scan(&item.ID, &item.ShowID, &item.Watched)
+		if err != nil {
+			return nil, errors.Wrap(err, "scanning item row failed")
+		}
+		items = append(items, item)
+	}
+
+	if rows.Err() != nil {
+		return nil, errors.Wrap(err, "item rows error")
 	}
 
 	return items, nil
 }
 
-// First returns the item with the given id, or error if there is no such item.
-func (s *DbStore) First(id uint) (*Item, error) {
+// Get returns the item found with the given id, or an error if there is no such item.
+func (s *DbStore) Get(id uint) (*Item, error) {
 	var item Item
-	err := s.db.First(&item, id).Error
+	err := s.db.QueryRow("SELECT * FROM items WHERE id = ?", id).Scan(&item.ID, &item.ShowID, &item.Watched)
 	if err != nil {
-		return nil, errors.Wrap(err, "find item failed")
+		return nil, errors.Wrap(err, "query to get item failed")
 	}
 
 	return &item, nil
 }
 
-// Create adds the given show to the store.
+// Create adds the given item to the store.
 func (s *DbStore) Create(item *Item) error {
-	err := s.db.Create(item).Error
+	_, err := s.db.Exec(`INSERT INTO items (show_id, watched) VALUES (? ,?)`, item.ShowID, item.Watched)
 	if err != nil {
 		return errors.Wrap(err, "create item failed")
 	}
@@ -84,34 +108,45 @@ func (s *DbStore) Create(item *Item) error {
 	return nil
 }
 
-// SetWatched sets the "Watched" field of the item with the given id to the value passed as argument.
+// SetWatched sets the "watched" field of the item with the given id to the value passed as argument.
+// If the item is not found, it will return an error.
 func (s *DbStore) SetWatched(id uint, watched bool) error {
-	item, err := s.First(id)
-	if err != nil {
-		return errors.Wrap(err, "find item to set watched failed")
+	value := 1
+	if !watched {
+		value = 0
 	}
 
-	item.Watched = watched
-	err = s.db.Save(item).Error
+	r, err := s.db.Exec("UPDATE items SET watched = ? WHERE id = ?", value, id)
 	if err != nil {
-		return errors.Wrap(err, "set watched failed")
+		return errors.Wrap(err, "update item failed")
 	}
 
-	return err
+	affected, err := r.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err, "retrieving affected rows failed")
+	}
+	if affected == 0 {
+		return errors.New("item not found")
+	}
+
+	return nil
 }
 
 // Delete deletes the item with the given id. If there is no such item, it
 // will return an error.
 func (s *DbStore) Delete(id uint) error {
-	item, err := s.First(id)
-	if err != nil {
-		return errors.Wrap(err, "find item to delete failed")
-	}
-
-	err = s.db.Delete(item).Error
+	r, err := s.db.Exec("DELETE FROM items WHERE id = ?", id)
 	if err != nil {
 		return errors.Wrap(err, "delete item failed")
 	}
 
-	return err
+	affected, err := r.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err, "retrieving affected rows failed")
+	}
+	if affected == 0 {
+		return errors.New("item not found")
+	}
+
+	return nil
 }
