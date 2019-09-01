@@ -5,14 +5,14 @@ import (
 	"net/http"
 
 	"github.com/lucactt/thelist/constants"
-	"github.com/lucactt/thelist/data"
+	"github.com/lucactt/thelist/common"
 	"github.com/lucactt/thelist/router"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func startServer() {
-	dbStore, err := data.NewDbStore(viper.GetString(constants.DbPathOption))
+	dbStore, err := common.NewDbStore(viper.GetString(constants.DbPathOption))
 	defer dbStore.Close()
 
 	if err != nil {

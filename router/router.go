@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/lucactt/thelist/data"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/lucactt/thelist/common"
 )
 
 // New returns a new router that handles the /show route
-func New(store data.Store) http.Handler {
+func New(store common.Store) http.Handler {
 	router := chi.NewRouter()
 
 	router.Use(middleware.StripSlashes)

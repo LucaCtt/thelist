@@ -3,10 +3,8 @@ package cmd
 import (
 	"log"
 
+	"github.com/lucactt/thelist/common"
 	"github.com/lucactt/thelist/constants"
-	"github.com/lucactt/thelist/util"
-
-	"github.com/lucactt/thelist/data"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,7 +13,7 @@ func init() {
 	rootCmd.AddCommand(addCmd)
 }
 
-func add(args []string, prompt util.Prompt, client util.Client, store data.Store) error {
+func add(args []string, prompt common.Prompt, client common.Client, store common.Store) error {
 	name := ""
 
 	if len(args) != 0 {
@@ -39,7 +37,7 @@ func add(args []string, prompt util.Prompt, client util.Client, store data.Store
 	}
 
 	showID := selectedShow.ID
-	err = store.Create(&data.Item{ShowID: showID})
+	err = store.Create(&common.Item{ShowID: showID})
 	if err != nil {
 		return err
 	}
@@ -53,15 +51,15 @@ var addCmd = &cobra.Command{
 	Long:  constants.AddCmdLong,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		dbStore, err := data.NewDbStore(viper.GetString(constants.DbPathOption))
+		dbStore, err := common.NewDbStore(viper.GetString(constants.DbPathOption))
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer dbStore.Close()
 
-		client := util.NewAPIClient(viper.GetString(constants.APIKeyOption))
+		client := common.NewAPIClient(viper.GetString(constants.APIKeyOption))
 
-		err = add(args, &util.CliPrompt{}, client, dbStore)
+		err = add(args, &common.CliPrompt{}, client, dbStore)
 		if err != nil {
 			log.Fatal(err)
 		}

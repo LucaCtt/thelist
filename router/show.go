@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/lucactt/thelist/data"
+	"github.com/lucactt/thelist/common"
 )
 
-func showRouter(store data.Store) http.Handler {
+func showRouter(store common.Store) http.Handler {
 	router := chi.NewRouter()
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +35,7 @@ func showRouter(store data.Store) http.Handler {
 	})
 
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		var show data.Item
+		var show common.Item
 		err := json.NewDecoder(r.Body).Decode(&show)
 		if err != nil {
 			w.WriteHeader(http.StatusNotAcceptable)

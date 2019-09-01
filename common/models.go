@@ -1,4 +1,4 @@
-package data
+package common
 
 // Item represents an item of the show list.
 type Item struct {
@@ -14,10 +14,4 @@ type Show struct {
 	ReleaseDate string
 	Popularity  float32
 	VoteAverage float32
-}
-
-// ShowList represents a list of shows.
-type ShowList struct {
-	Results      []*Show
-	TotalResults int
 }

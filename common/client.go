@@ -1,15 +1,14 @@
 //go:generate mockgen -destination=../mocks/mock_client.go -package=mocks github.com/lucactt/thelist/util Client
 
-package util
+package common
 
 import (
-	"github.com/lucactt/thelist/data"
 	"github.com/ryanbradynd05/go-tmdb"
 )
 
 // Client allows to retrieve info about shows.
 type Client interface {
-	SearchShow(name string) (*data.ShowList, error)
+	SearchShow(name string) ([]*Show, error)
 }
 
 // APIClient allows to communicate with the TMDb API.
@@ -20,14 +19,14 @@ type APIClient struct {
 
 // convertToShowList wraps the results of the TMDb API library into the
 // ShowSearchResult struct.
-func convertToShowList(result *tmdb.MultiSearchResults) *data.ShowList {
+func convertToShowList(result *tmdb.MultiSearchResults) []*Show {
 	movies := result.GetMoviesResults()
 	tv := result.GetTvResults()
-	shows := make([]*data.Show, result.TotalResults)
+	shows := make([]*Show, result.TotalResults)
 
 	for i := 0; i < len(movies); i++ {
 		movie := movies[i]
-		shows[i] = &data.Show{
+		shows[i] = &Show{
 			ID:          movie.ID,
 			Name:        movie.Title,
 			ReleaseDate: movie.ReleaseDate,
@@ -38,7 +37,7 @@ func convertToShowList(result *tmdb.MultiSearchResults) *data.ShowList {
 
 	for i := 0; i < len(tv); i++ {
 		tv := tv[i]
-		shows[i+len(movies)] = &data.Show{
+		shows[i+len(movies)] = &Show{
 			ID:          tv.ID,
 			Name:        tv.Name,
 			ReleaseDate: tv.FirstAirDate,
@@ -47,10 +46,7 @@ func convertToShowList(result *tmdb.MultiSearchResults) *data.ShowList {
 		}
 	}
 
-	return &data.ShowList{
-		Results:      shows,
-		TotalResults: result.TotalResults,
-	}
+	return shows
 }
 
 // NewAPIClient creates a new api client using the given API authentication key.
@@ -61,7 +57,7 @@ func NewAPIClient(apiKey string) *APIClient {
 }
 
 // SearchShow searches for the given show name in both movies an tv series.
-func (c *APIClient) SearchShow(name string) (*data.ShowList, error) {
+func (c *APIClient) SearchShow(name string) ([]*Show, error) {
 	result, err := c.client.SearchMulti(name, nil)
 	if err != nil {
 		return nil, err
