@@ -9,40 +9,39 @@ import (
 	"github.com/spf13/viper"
 )
 
-func init() {
-	rootCmd.AddCommand(addCmd)
-}
-
-func add(args []string, prompt common.Prompt, client common.Client, store common.Store) error {
-	name := ""
+func add(args []string, prompter common.Prompter, client common.Client, store common.Store) error {
+	var name string
 
 	if len(args) != 0 {
 		name = args[0]
 	} else {
-		input, err := prompt.PromptShow()
+		input, err := prompter.Input()
 		if err != nil {
 			return err
 		}
 		name = input
 	}
 
-	searchResult, err := client.SearchShow(name)
+	shows, err := client.Search(name)
 	if err != nil {
 		return err
 	}
 
-	selectedShow, err := prompt.SelectShow(searchResult)
+	selected, err := prompter.Select(shows)
 	if err != nil {
 		return err
 	}
 
-	showID := selectedShow.ID
-	err = store.Create(&common.Item{ShowID: showID})
+	err = store.Create(&common.Item{ShowID: selected.ID})
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func init() {
+	rootCmd.AddCommand(addCmd)
 }
 
 var addCmd = &cobra.Command{
@@ -57,9 +56,8 @@ var addCmd = &cobra.Command{
 		}
 		defer dbStore.Close()
 
-		client := common.NewAPIClient(viper.GetString(constants.APIKeyOption))
-
-		err = add(args, &common.CliPrompt{}, client, dbStore)
+		client := common.DefaultTMDbClient(viper.GetString(constants.APIKeyOption))
+		err = add(args, &common.CliPrompter{}, client, dbStore)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -9,15 +9,18 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-type Prompt interface {
-	PromptShow() (string, error)
-	SelectShow(shows []*Show) (*Show, error)
+// Prompter represents an user input interface.
+type Prompter interface {
+	Input() (string, error)
+	Select(shows []*Show) (*Show, error)
 }
 
-type CliPrompt struct {
+// CliPrompter represents a cli user input interface.
+type CliPrompter struct {
 }
 
-func (c *CliPrompt) PromptShow() (string, error) {
+// Input allows to ask the user for a single line input.
+func (c *CliPrompter) Input() (string, error) {
 	prompt := promptui.Prompt{
 		Label: "Show name",
 		Templates: &promptui.PromptTemplates{
@@ -33,7 +36,8 @@ func (c *CliPrompt) PromptShow() (string, error) {
 	return show, nil
 }
 
-func (c *CliPrompt) SelectShow(shows []*Show) (*Show, error) {
+// Select allows the user to select a single option between the available ones.
+func (c *CliPrompter) Select(shows []*Show) (*Show, error) {
 	if len(shows) == 0 {
 		return nil, fmt.Errorf("No shows found")
 	}
