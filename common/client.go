@@ -31,6 +31,11 @@ type tmdbMovieSearchResult struct {
 	TotalResults int              `json:"total_results"`
 }
 
+type tmdbTvSearchResult struct {
+	Results      []*tmdbTvInfo `json:"results"`
+	TotalResults int           `json:"total_results"`
+}
+
 type tmdbError struct {
 	StatusMessage string `json:"status_message"`
 }
@@ -43,14 +48,26 @@ type tmdbMovieInfo struct {
 	VoteAverage float32 `json:"vote_average"`
 }
 
+type tmdbTvInfo struct {
+	ID           int     `json:"id"`
+	Name         string  `json:"name"`
+	FirstAirDate string  `json:"first_air_date"`
+	Popularity   float32 `json:"popularity"`
+	VoteAverage  float32 `json:"vote_average"`
+}
+
+type tmdbSearchResult struct {
+	MovieSearchResult *tmdbMovieSearchResult
+	TvSearchResult    *tmdbTvSearchResult
+	TotalResults      int
+}
+
 // convertToShowList wraps the results of the TMDb API library into the
 // ShowSearchResult struct.
-func convertToShowList(result *tmdbMovieSearchResult) []*Show {
-	movies := result.Results
+func convertToShowList(result *tmdbSearchResult) []*Show {
 	shows := make([]*Show, result.TotalResults)
 
-	for i := 0; i < len(movies); i++ {
-		movie := movies[i]
+	for i, movie := range result.MovieSearchResult.Results {
 		shows[i] = &Show{
 			ID:          movie.ID,
 			Name:        movie.Title,
@@ -59,17 +76,16 @@ func convertToShowList(result *tmdbMovieSearchResult) []*Show {
 			VoteAverage: movie.VoteAverage,
 		}
 	}
-	/*
-		for i := 0; i < len(tv); i++ {
-			tv := tv[i]
-			shows[i+len(movies)] = &Show{
-				ID:          tv.ID,
-				Name:        tv.Name,
-				ReleaseDate: tv.FirstAirDate,
-				Popularity:  tv.Popularity,
-				VoteAverage: tv.VoteAverage,
-			}
-		}*/
+
+	for i, tv := range result.TvSearchResult.Results {
+		shows[i+result.MovieSearchResult.TotalResults] = &Show{
+			ID:          tv.ID,
+			Name:        tv.Name,
+			ReleaseDate: tv.FirstAirDate,
+			Popularity:  tv.Popularity,
+			VoteAverage: tv.VoteAverage,
+		}
+	}
 
 	return shows
 }
@@ -91,13 +107,10 @@ func DefaultTMDbClient(k string) *TMDbClient {
 	})
 }
 
-// Search searches for the given show name in both movies an tv series.
-func (c *TMDbClient) Search(name string) ([]*Show, error) {
-	url := fmt.Sprintf("%s/search/movie?api_key=%s&query=%s,", c.baseURL, c.key, name)
-
+func (c *TMDbClient) doRequest(url string, result interface{}) error {
 	r, err := c.client.Get(url)
 	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("open connection to %s failed", url))
+		return errors.Wrap(err, fmt.Sprintf("open connection to %s failed", url))
 	}
 	defer r.Body.Close()
 
@@ -107,16 +120,39 @@ func (c *TMDbClient) Search(name string) ([]*Show, error) {
 		var error tmdbError
 		err = decoder.Decode(&error)
 		if err != nil {
-			return nil, errors.Wrap(err, "decode error body failed")
+			return errors.Wrap(err, "decode error body failed")
 		}
-		return nil, errors.New(error.StatusMessage)
+		return errors.New(error.StatusMessage)
 	}
 
-	var result tmdbMovieSearchResult
 	err = decoder.Decode(&result)
 	if err != nil {
-		return nil, errors.Wrap(err, "decode result body failed")
+		return errors.Wrap(err, "decode result body failed")
 	}
 
-	return convertToShowList(&result), nil
+	return nil
+}
+
+// Search searches for the given show name in both movies and tv series.
+func (c *TMDbClient) Search(name string) ([]*Show, error) {
+	moviesURL := fmt.Sprintf("%s/search/movie?api_key=%s&query=%s,", c.baseURL, c.key, name)
+	tvURL := fmt.Sprintf("%s/search/tv?api_key=%s&query=%s,", c.baseURL, c.key, name)
+
+	var movies tmdbMovieSearchResult
+	err := c.doRequest(moviesURL, &movies)
+	if err != nil {
+		return nil, errors.Wrap(err, "get movies failed")
+	}
+
+	var tv tmdbTvSearchResult
+	err = c.doRequest(tvURL, &tv)
+	if err != nil {
+		return nil, errors.Wrap(err, "get tv shows failed")
+	}
+
+	return convertToShowList(&tmdbSearchResult{
+		MovieSearchResult: &movies,
+		TvSearchResult:    &tv,
+		TotalResults:      movies.TotalResults + tv.TotalResults,
+	}), nil
 }

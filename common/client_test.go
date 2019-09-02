@@ -25,12 +25,26 @@ func assertShowsEqual(t *testing.T, got, want []*Show) {
 	}
 }
 
+func makeTvResult(t *testing.T, names ...string) *tmdbTvSearchResult {
+	t.Helper()
+
+	tv := make([]*tmdbTvInfo, len(names))
+	for i, name := range names {
+		tv[i] = &tmdbTvInfo{Name: name}
+	}
+
+	return &tmdbTvSearchResult{
+		Results:      tv,
+		TotalResults: len(tv),
+	}
+}
+
 func makeMovieResult(t *testing.T, names ...string) *tmdbMovieSearchResult {
 	t.Helper()
 
 	movies := make([]*tmdbMovieInfo, len(names))
 	for i, name := range names {
-		movies[i] = &tmdbMovieInfo{ID: i, Title: name}
+		movies[i] = &tmdbMovieInfo{Title: name}
 	}
 
 	return &tmdbMovieSearchResult{
@@ -44,46 +58,74 @@ func makeShows(t *testing.T, names ...string) []*Show {
 
 	result := make([]*Show, len(names))
 	for i, name := range names {
-		result[i] = &Show{ID: i, Name: name}
+		result[i] = &Show{Name: name}
 	}
 	return result
 }
 
-func getTestClient(t *testing.T, handler http.HandlerFunc) *TMDbClient {
+func getTestClient(t *testing.T, movieHandler, tvHandler http.HandlerFunc) *TMDbClient {
 	t.Helper()
 
-	server := httptest.NewServer(http.HandlerFunc(handler))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/search/movie", movieHandler)
+	mux.HandleFunc("/search/tv", tvHandler)
+	server := httptest.NewServer(mux)
 	return NewTMDbClient("test", server.URL, server.Client())
 }
 
 func TestTMDbClient_Search(t *testing.T) {
 	tests := []struct {
-		name    string
-		handler http.HandlerFunc
-		want    []*Show
-		wantErr bool
+		name         string
+		movieHandler http.HandlerFunc
+		tvHandler    http.HandlerFunc
+		want         []*Show
+		wantErr      bool
 	}{
 		{
-			name: "multiple results",
-			handler: func(w http.ResponseWriter, r *http.Request) {
+			name: "multiple movie results",
+			movieHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(makeMovieResult(t, "test1", "test2"))
 			},
-			want:    makeShows(t, "test1", "test2"),
+			tvHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(makeTvResult(t, "test3", "test4"))
+			},
+			want:    makeShows(t, "test1", "test2", "test3", "test4"),
 			wantErr: false,
 		},
 		{
 			name: "no results",
-			handler: func(w http.ResponseWriter, r *http.Request) {
+			movieHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(&tmdbMovieSearchResult{})
+			},
+			tvHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(&tmdbTvSearchResult{})
 			},
 			want:    []*Show{},
 			wantErr: false,
 		},
 		{
-			name: "invalid response",
-			handler: func(w http.ResponseWriter, r *http.Request) {
+			name: "invalid movie response",
+			movieHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+			tvHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(&tmdbTvSearchResult{})
+			},
+			want:    []*Show{},
+			wantErr: true,
+		},
+		{
+			name: "invalid tv response",
+			movieHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(&tmdbMovieSearchResult{})
+			},
+			tvHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
 			want:    []*Show{},
@@ -91,10 +133,16 @@ func TestTMDbClient_Search(t *testing.T) {
 		},
 		{
 			name: "valid error",
-			handler: func(w http.ResponseWriter, r *http.Request) {
+			movieHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 				json.NewEncoder(w).Encode(&tmdbError{
-					StatusMessage: "test message",
+					StatusMessage: "test message 1",
+				})
+			},
+			tvHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+				json.NewEncoder(w).Encode(&tmdbError{
+					StatusMessage: "test message 2",
 				})
 			},
 			want:    []*Show{},
@@ -102,7 +150,10 @@ func TestTMDbClient_Search(t *testing.T) {
 		},
 		{
 			name: "invalid error",
-			handler: func(w http.ResponseWriter, r *http.Request) {
+			movieHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusNotFound)
+			},
+			tvHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 			},
 			want:    []*Show{},
@@ -111,7 +162,7 @@ func TestTMDbClient_Search(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := getTestClient(t, tt.handler)
+			c := getTestClient(t, tt.movieHandler, tt.tvHandler)
 			got, err := c.Search("test")
 			assertErr(t, err, tt.wantErr)
 			assertShowsEqual(t, got, tt.want)
