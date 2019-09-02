@@ -27,13 +27,11 @@ type TMDbClient struct {
 }
 
 type tmdbMovieSearchResult struct {
-	Results      []*tmdbMovieInfo `json:"results"`
-	TotalResults int              `json:"total_results"`
+	Results []*tmdbMovieInfo `json:"results"`
 }
 
 type tmdbTvSearchResult struct {
-	Results      []*tmdbTvInfo `json:"results"`
-	TotalResults int           `json:"total_results"`
+	Results []*tmdbTvInfo `json:"results"`
 }
 
 type tmdbError struct {
@@ -56,18 +54,12 @@ type tmdbTvInfo struct {
 	VoteAverage  float32 `json:"vote_average"`
 }
 
-type tmdbSearchResult struct {
-	MovieSearchResult *tmdbMovieSearchResult
-	TvSearchResult    *tmdbTvSearchResult
-	TotalResults      int
-}
-
 // convertToShowList wraps the results of the TMDb API library into the
 // ShowSearchResult struct.
-func convertToShowList(result *tmdbSearchResult) []*Show {
-	shows := make([]*Show, result.TotalResults)
+func convertToShowsList(movies []*tmdbMovieInfo, tv []*tmdbTvInfo) []*Show {
+	shows := make([]*Show, len(movies)+len(tv))
 
-	for i, movie := range result.MovieSearchResult.Results {
+	for i, movie := range movies {
 		shows[i] = &Show{
 			ID:          movie.ID,
 			Name:        movie.Title,
@@ -77,8 +69,8 @@ func convertToShowList(result *tmdbSearchResult) []*Show {
 		}
 	}
 
-	for i, tv := range result.TvSearchResult.Results {
-		shows[i+result.MovieSearchResult.TotalResults] = &Show{
+	for i, tv := range tv {
+		shows[i+len(movies)] = &Show{
 			ID:          tv.ID,
 			Name:        tv.Name,
 			ReleaseDate: tv.FirstAirDate,
@@ -137,22 +129,24 @@ func (c *TMDbClient) doRequest(url string, result interface{}) error {
 func (c *TMDbClient) Search(name string) ([]*Show, error) {
 	moviesURL := fmt.Sprintf("%s/search/movie?api_key=%s&query=%s,", c.baseURL, c.key, name)
 	tvURL := fmt.Sprintf("%s/search/tv?api_key=%s&query=%s,", c.baseURL, c.key, name)
+	errChan := make(chan error, 2)
 
 	var movies tmdbMovieSearchResult
-	err := c.doRequest(moviesURL, &movies)
-	if err != nil {
-		return nil, errors.Wrap(err, "get movies failed")
-	}
+	go func() {
+		errChan <- c.doRequest(moviesURL, &movies)
+	}()
 
 	var tv tmdbTvSearchResult
-	err = c.doRequest(tvURL, &tv)
-	if err != nil {
-		return nil, errors.Wrap(err, "get tv shows failed")
+	go func() {
+		errChan <- c.doRequest(tvURL, &tv)
+	}()
+
+	for i := 0; i < 2; i++ {
+		err := <-errChan
+		if err != nil {
+			return nil, errors.Wrap(err, "get shows failed")
+		}
 	}
 
-	return convertToShowList(&tmdbSearchResult{
-		MovieSearchResult: &movies,
-		TvSearchResult:    &tv,
-		TotalResults:      movies.TotalResults + tv.TotalResults,
-	}), nil
+	return convertToShowsList(movies.Results, tv.Results), nil
 }

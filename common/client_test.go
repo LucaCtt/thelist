@@ -34,8 +34,7 @@ func makeTvResult(t *testing.T, names ...string) *tmdbTvSearchResult {
 	}
 
 	return &tmdbTvSearchResult{
-		Results:      tv,
-		TotalResults: len(tv),
+		Results: tv,
 	}
 }
 
@@ -48,8 +47,7 @@ func makeMovieResult(t *testing.T, names ...string) *tmdbMovieSearchResult {
 	}
 
 	return &tmdbMovieSearchResult{
-		Results:      movies,
-		TotalResults: len(movies),
+		Results: movies,
 	}
 }
 
@@ -190,7 +188,6 @@ func BenchmarkTMDbClient_Search(b *testing.B) {
 					Title: "test2",
 				},
 			},
-			TotalResults: 2,
 		})
 	}))
 
