@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/lucactt/thelist/common"
@@ -15,11 +16,7 @@ func add(args []string, prompter common.Prompter, client common.Client, store co
 	if len(args) != 0 {
 		name = args[0]
 	} else {
-		input, err := prompter.Input()
-		if err != nil {
-			return err
-		}
-		name = input
+		name = prompter.Input("Show name")
 	}
 
 	shows, err := client.Search(name)
@@ -27,12 +24,13 @@ func add(args []string, prompter common.Prompter, client common.Client, store co
 		return err
 	}
 
-	selected, err := prompter.Select(shows)
-	if err != nil {
-		return err
+	options := make([]string, len(shows))
+	for i, s := range shows {
+		options[i] = fmt.Sprintf("%s (%s)", s.Name, s.ReleaseDate)
 	}
 
-	err = store.Create(&common.Item{ShowID: selected.ID})
+	index := prompter.Select(fmt.Sprintf("Found %d results", len(shows)), options)
+	err = store.Create(&common.Item{ShowID: shows[index].ID})
 	if err != nil {
 		return err
 	}

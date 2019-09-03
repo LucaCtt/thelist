@@ -4,8 +4,6 @@ package common
 
 import (
 	"testing"
-
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 func assertErr(t *testing.T, got error, want bool) {

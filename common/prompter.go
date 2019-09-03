@@ -3,16 +3,14 @@
 package common
 
 import (
-	"fmt"
-	"strings"
-
-	"github.com/manifoldco/promptui"
+	"github.com/AlecAivazis/survey/v2"
 )
 
 // Prompter represents an user input interface.
 type Prompter interface {
-	Input() (string, error)
-	Select(shows []*Show) (*Show, error)
+	Input(label string) string
+	Select(label string, options []string) int
+	MultiSelect(label string, options []string) []int
 }
 
 // CliPrompter represents a cli user input interface.
@@ -20,65 +18,38 @@ type CliPrompter struct {
 }
 
 // Input allows to ask the user for a single line input.
-func (c *CliPrompter) Input() (string, error) {
-	prompt := promptui.Prompt{
-		Label: "Show name",
-		Templates: &promptui.PromptTemplates{
-			Success: fmt.Sprintf("%s {{ . | bold | green }} ", promptui.IconGood),
-		},
+func (c *CliPrompter) Input(label string) string {
+	prompt := &survey.Input{
+		Message: label,
 	}
 
-	show, err := prompt.Run()
-	if err != nil {
-		return "", err
-	}
-
-	return show, nil
+	var show string
+	survey.AskOne(prompt, &show)
+	return show
 }
 
 // Select allows the user to select a single option between the available ones.
-func (c *CliPrompter) Select(shows []*Show) (*Show, error) {
-	if len(shows) == 0 {
-		return nil, fmt.Errorf("No shows found")
+// Will return the index of the selected option.
+func (c *CliPrompter) Select(label string, options []string) int {
+	prompt := &survey.Select{
+		Message: label,
+		Options: options,
 	}
 
-	if len(shows) == 1 {
-		return shows[0], nil
-	}
-
-	prompt := promptui.Select{
-		Label:     "Select one",
-		Items:     shows,
-		Templates: templates,
-		Searcher:  searcher(shows),
-	}
-	i, _, err := prompt.Run()
-	if err != nil {
-		return nil, err
-	}
-
-	return shows[i], nil
+	var index int
+	survey.AskOne(prompt, &index)
+	return index
 }
 
-var templates = &promptui.SelectTemplates{
-	Active:   fmt.Sprintf("%s {{ .Name | cyan | underline }}", promptui.IconSelect),
-	Inactive: "  {{ .Name | cyan }}",
-	Selected: fmt.Sprintf("%s {{ .Name | bold | green }}", promptui.IconGood),
-	Details: `
-{{ "Name:" | faint }}	{{ .Name }}
-{{ "Release Date:" | faint }}	{{ .ReleaseDate }}
-{{ "Popularity:" | faint }}	{{ .Popularity }}
-{{ "Vote Average:" | faint }}	{{ .VoteAverage}}`,
-}
-
-func searcher(shows []*Show) func(string, int) bool {
-	return func(input string, index int) bool {
-		show := shows[index]
-
-		// Convert string to lowercase and remove all whitespace
-		name := strings.Replace(strings.ToLower(show.Name), " ", "", -1)
-		input = strings.Replace(strings.ToLower(input), " ", "", -1)
-
-		return strings.Contains(name, input)
+// MultiSelect allows the user to select multiple options between the available ones.
+// Will return a slice containig the indexes of the selected options.
+func (c *CliPrompter) MultiSelect(label string, options []string) []int {
+	prompt := &survey.MultiSelect{
+		Message: label,
+		Options: options,
 	}
+
+	var indexes []int
+	survey.AskOne(prompt, &indexes)
+	return indexes
 }
