@@ -1,5 +1,3 @@
-//go:generate mockgen -destination=../mocks/mock_store.go -package=mocks github.com/lucactt/thelist/data Store
-
 package common
 
 import (

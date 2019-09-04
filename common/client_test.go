@@ -1,5 +1,3 @@
-//go:generate mockgen -destination=../mocks/mock_client.go -package=mocks github.com/lucactt/thelist/util Client
-
 package common
 
 import (

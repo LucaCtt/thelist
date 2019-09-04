@@ -1,5 +1,3 @@
-//go:generate mockgen -destination=../mocks/mock_prompt.go -package=mocks github.com/lucactt/thelist/util Prompt
-
 package common
 
 import (

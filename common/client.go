@@ -1,5 +1,3 @@
-//go:generate mockgen -destination=../mocks/mock_client.go -package=mocks github.com/lucactt/thelist/util Client
-
 package common
 
 import (
@@ -7,8 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 // Client allows to retrieve info about shows.
@@ -102,7 +98,7 @@ func DefaultTMDbClient(k string) *TMDbClient {
 func (c *TMDbClient) doRequest(url string, result interface{}) error {
 	r, err := c.client.Get(url)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("open connection to %s failed", url))
+		return fmt.Errorf("open connection to %s failed: %w", url, err)
 	}
 	defer r.Body.Close()
 
@@ -112,14 +108,14 @@ func (c *TMDbClient) doRequest(url string, result interface{}) error {
 		var error tmdbError
 		err = decoder.Decode(&error)
 		if err != nil {
-			return errors.Wrap(err, "decode error body failed")
+			return fmt.Errorf("decode error body failed: %w", err)
 		}
-		return errors.New(error.StatusMessage)
+		return fmt.Errorf(error.StatusMessage)
 	}
 
 	err = decoder.Decode(&result)
 	if err != nil {
-		return errors.Wrap(err, "decode result body failed")
+		return fmt.Errorf("decode result body failed: %w", err)
 	}
 
 	return nil
@@ -144,7 +140,7 @@ func (c *TMDbClient) Search(name string) ([]*Show, error) {
 	for i := 0; i < 2; i++ {
 		err := <-errChan
 		if err != nil {
-			return nil, errors.Wrap(err, "get shows failed")
+			return nil, fmt.Errorf("get shows failed: %w", err)
 		}
 	}
 
