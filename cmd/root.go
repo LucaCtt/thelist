@@ -5,31 +5,30 @@ import (
 	"os"
 	"strings"
 
-	"github.com/LucaCtt/thelist/constants"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   constants.RootCmdUse,
-	Short: constants.RootCmdShort,
-	Long:  constants.RootCmdLong,
+	Use:   rootCmdUse,
+	Short: rootCmdShort,
+	Long:  rootCmdLong,
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringP(constants.APIKeyOption, constants.APIKeyShort, "", constants.APIKeyUsage)
-	viper.BindPFlag(constants.APIKeyOption, rootCmd.PersistentFlags().Lookup(constants.APIKeyOption))
+	rootCmd.PersistentFlags().StringP(apiKeyOpt, apiKeyShort, "", apiKeyUsage)
+	viper.BindPFlag(apiKeyOpt, rootCmd.PersistentFlags().Lookup(apiKeyOpt))
 
 	// Viper configuration and defaults.
-	viper.SetDefault(constants.ServerPortOption, constants.ServerPortDefault)
-	viper.SetDefault(constants.ClientPortOption, constants.ClientPortDefault)
-	viper.SetDefault(constants.DbPathOption, constants.DbPathDefault)
+	viper.SetDefault(serverPortOpt, serverPortDefault)
+	viper.SetDefault(clientPortOpt, clientPortDefault)
+	viper.SetDefault(dbPathOpt, dbPathDefault)
 
-	viper.SetConfigName(constants.ConfigName)
-	viper.AddConfigPath(constants.ConfigPath)
+	viper.SetConfigName(configName)
+	viper.AddConfigPath(configPath)
 	viper.AddConfigPath(".")
 
-	viper.SetEnvPrefix(strings.ToUpper(constants.AppName))
+	viper.SetEnvPrefix(strings.ToUpper(appName))
 	viper.AutomaticEnv()
 
 	viper.ReadInConfig()

@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/LucaCtt/thelist/common"
-	"github.com/LucaCtt/thelist/constants"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -43,18 +42,18 @@ func init() {
 }
 
 var addCmd = &cobra.Command{
-	Use:   constants.AddCmdUse,
-	Short: constants.AddCmdShort,
-	Long:  constants.AddCmdLong,
+	Use:   addCmdUse,
+	Short: addCmdShort,
+	Long:  addCmdLong,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		dbStore, err := common.NewDbStore(viper.GetString(constants.DbPathOption))
+		dbStore, err := common.NewDbStore(viper.GetString(dbPathOpt))
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer dbStore.Close()
 
-		client := common.DefaultTMDbClient(viper.GetString(constants.APIKeyOption))
+		client := common.DefaultTMDbClient(viper.GetString(apiKeyOpt))
 		err = add(args, &common.CliPrompter{}, client, dbStore)
 		if err != nil {
 			log.Fatal(err)
