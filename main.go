@@ -1,6 +1,6 @@
 package main
 
-import "github.com/lucactt/thelist/cmd"
+import "github.com/LucaCtt/thelist/cmd"
 
 func main() {
 	// Start cobra

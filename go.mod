@@ -1,4 +1,4 @@
-module github.com/lucactt/thelist
+module github.com/LucaCtt/thelist
 
 go 1.13
 

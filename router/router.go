@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/lucactt/thelist/common"
+	"github.com/LucaCtt/thelist/common"
 )
 
 // New returns a new router that handles the /show route

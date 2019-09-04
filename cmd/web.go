@@ -4,9 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/lucactt/thelist/constants"
-	"github.com/lucactt/thelist/common"
-	"github.com/lucactt/thelist/router"
+	"github.com/LucaCtt/thelist/constants"
+	"github.com/LucaCtt/thelist/common"
+	"github.com/LucaCtt/thelist/router"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

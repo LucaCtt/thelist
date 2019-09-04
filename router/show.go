@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi"
-	"github.com/lucactt/thelist/common"
+	"github.com/LucaCtt/thelist/common"
 )
 
 func showRouter(store common.Store) http.Handler {
