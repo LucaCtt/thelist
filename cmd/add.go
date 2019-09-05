@@ -15,7 +15,11 @@ func add(args []string, prompter common.Prompter, client common.Client, store co
 	if len(args) != 0 {
 		name = args[0]
 	} else {
-		name = prompter.Input("Show name")
+		input, err := prompter.Input("Show name")
+		if err != nil {
+			return fmt.Errorf("prompt show name failed: %w", err)
+		}
+		name = input
 	}
 
 	shows, err := client.Search(name)
@@ -25,10 +29,10 @@ func add(args []string, prompter common.Prompter, client common.Client, store co
 
 	options := make([]string, len(shows))
 	for i, s := range shows {
-		options[i] = fmt.Sprintf("%s (%s)", s.Name, s.ReleaseDate)
+		options[i] = fmt.Sprintf("%s (%d)", s.Name, s.ReleaseDate.Year())
 	}
 
-	index := prompter.Select(fmt.Sprintf("Found %d results", len(shows)), options)
+	index, err := prompter.Select(fmt.Sprintf("Found %d results", len(shows)), options)
 	err = store.Create(&common.Item{ShowID: shows[index].ID})
 	if err != nil {
 		return err
