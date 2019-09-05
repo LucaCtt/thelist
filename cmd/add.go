@@ -19,12 +19,18 @@ func add(args []string, prompter common.Prompter, client common.Client, store co
 		if err != nil {
 			return fmt.Errorf("prompt show name failed: %w", err)
 		}
+		if input == "" {
+			return fmt.Errorf("Invalid show name")
+		}
 		name = input
 	}
 
 	shows, err := client.Search(name)
 	if err != nil {
-		return err
+		return fmt.Errorf("search show failed: %w", err)
+	}
+	if len(shows) == 0 {
+		return fmt.Errorf("No shows found")
 	}
 
 	options := make([]string, len(shows))
@@ -32,8 +38,18 @@ func add(args []string, prompter common.Prompter, client common.Client, store co
 		options[i] = fmt.Sprintf("%s (%d)", s.Name, s.ReleaseDate.Year())
 	}
 
-	index, err := prompter.Select(fmt.Sprintf("Found %d results", len(shows)), options)
-	err = store.Create(&common.Item{ShowID: shows[index].ID})
+	var selected *common.Show
+	if len(shows) == 1 {
+		selected = shows[0]
+	} else {
+		i, err := prompter.Select(fmt.Sprintf("Found %d results", len(shows)), options)
+		if err != nil {
+			return err
+		}
+		selected = shows[i]
+	}
+
+	err = store.Create(&common.Item{ShowID: selected.ID})
 	if err != nil {
 		return err
 	}
@@ -58,6 +74,7 @@ var addCmd = &cobra.Command{
 		defer dbStore.Close()
 
 		client := common.DefaultTMDbClient(viper.GetString(apiKeyOpt))
+
 		err = add(args, &common.CliPrompter{}, client, dbStore)
 		if err != nil {
 			log.Fatal(err)
