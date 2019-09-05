@@ -1,5 +1,7 @@
 package common
 
+import "time"
+
 // Item represents an item of the show list.
 type Item struct {
 	ID      uint `json:"id"`
@@ -11,7 +13,7 @@ type Item struct {
 type Show struct {
 	ID          int
 	Name        string
-	ReleaseDate string
+	ReleaseDate time.Time
 	Popularity  float32
 	VoteAverage float32
 }

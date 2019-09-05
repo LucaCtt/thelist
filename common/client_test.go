@@ -6,7 +6,11 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 )
+
+var testTimeStr = "2000-01-01"
+var testTime, _ = time.Parse(tmdbDateFormat, testTimeStr)
 
 func assertShowsEqual(t *testing.T, got, want []*Show) {
 	t.Helper()
@@ -28,7 +32,7 @@ func makeTvResult(t *testing.T, names ...string) *tmdbTvSearchResult {
 
 	tv := make([]*tmdbTvInfo, len(names))
 	for i, name := range names {
-		tv[i] = &tmdbTvInfo{Name: name}
+		tv[i] = &tmdbTvInfo{Name: name, FirstAirDate: testTimeStr}
 	}
 
 	return &tmdbTvSearchResult{
@@ -41,7 +45,7 @@ func makeMovieResult(t *testing.T, names ...string) *tmdbMovieSearchResult {
 
 	movies := make([]*tmdbMovieInfo, len(names))
 	for i, name := range names {
-		movies[i] = &tmdbMovieInfo{Title: name}
+		movies[i] = &tmdbMovieInfo{Title: name, ReleaseDate: testTimeStr}
 	}
 
 	return &tmdbMovieSearchResult{
@@ -54,7 +58,7 @@ func makeShows(t *testing.T, names ...string) []*Show {
 
 	result := make([]*Show, len(names))
 	for i, name := range names {
-		result[i] = &Show{Name: name}
+		result[i] = &Show{Name: name, ReleaseDate: testTime}
 	}
 	return result
 }

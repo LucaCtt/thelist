@@ -14,6 +14,7 @@ type Client interface {
 
 // BaseURL is the base url of the TMDb API.
 const BaseURL = "https://api.themoviedb.org/3"
+const tmdbDateFormat = "2006-01-02"
 
 // TMDbClient allows to communicate with the TMDb API.
 type TMDbClient struct {
@@ -52,30 +53,38 @@ type tmdbTvInfo struct {
 
 // convertToShowList wraps the results of the TMDb API library into the
 // ShowSearchResult struct.
-func convertToShowsList(movies []*tmdbMovieInfo, tv []*tmdbTvInfo) []*Show {
+func convertToShowsList(movies []*tmdbMovieInfo, tv []*tmdbTvInfo) ([]*Show, error) {
 	shows := make([]*Show, len(movies)+len(tv))
 
 	for i, movie := range movies {
+		releaseDate, err := time.Parse(tmdbDateFormat, movie.ReleaseDate)
+		if err != nil {
+			return nil, fmt.Errorf("parse movie release date failed: %w", err)
+		}
 		shows[i] = &Show{
 			ID:          movie.ID,
 			Name:        movie.Title,
-			ReleaseDate: movie.ReleaseDate,
+			ReleaseDate: releaseDate,
 			Popularity:  movie.Popularity,
 			VoteAverage: movie.VoteAverage,
 		}
 	}
 
 	for i, tv := range tv {
+		firstAirDate, err := time.Parse(tmdbDateFormat, tv.FirstAirDate)
+		if err != nil {
+			return nil, fmt.Errorf("parse tv show first air date failed: %w", err)
+		}
 		shows[i+len(movies)] = &Show{
 			ID:          tv.ID,
 			Name:        tv.Name,
-			ReleaseDate: tv.FirstAirDate,
+			ReleaseDate: firstAirDate,
 			Popularity:  tv.Popularity,
 			VoteAverage: tv.VoteAverage,
 		}
 	}
 
-	return shows
+	return shows, nil
 }
 
 // NewTMDbClient creates a new api client using the given API authentication key.
@@ -144,5 +153,10 @@ func (c *TMDbClient) Search(name string) ([]*Show, error) {
 		}
 	}
 
-	return convertToShowsList(movies.Results, tv.Results), nil
+	shows, err := convertToShowsList(movies.Results, tv.Results)
+	if err != nil {
+		return nil, fmt.Errorf("convert api results to shows failed: %w", err)
+	}
+
+	return shows, nil
 }
