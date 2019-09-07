@@ -38,6 +38,7 @@ func NewDbStore(path string) (*DbStore, error) {
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS items (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		type STRING NOT NULL,
 		show_id INTEGER NOT NULL,
 		watched BOOLEAN NOT NULL CHECK (watched IN (0,1))
 		)`)
@@ -71,9 +72,9 @@ func (s *DbStore) All() ([]*Item, error) {
 	var items []*Item
 	for rows.Next() {
 		var item Item
-		err = rows.Scan(&item.ID, &item.ShowID, &item.Watched)
+		err = rows.Scan(&item.ID, &item.Type, &item.ShowID, &item.Watched)
 		if err != nil {
-			return nil, fmt.Errorf("scanning item row failed: %w", err)
+			return nil, fmt.Errorf("scan item row failed: %w", err)
 		}
 		items = append(items, &item)
 	}
@@ -88,7 +89,7 @@ func (s *DbStore) All() ([]*Item, error) {
 // Get returns the item found with the given id, or an error if there is no such item.
 func (s *DbStore) Get(id uint) (*Item, error) {
 	var item Item
-	err := s.db.QueryRow("SELECT * FROM items WHERE id = ?", id).Scan(&item.ID, &item.ShowID, &item.Watched)
+	err := s.db.QueryRow("SELECT * FROM items WHERE id = ?", id).Scan(&item.ID, &item.Type, &item.ShowID, &item.Watched)
 	if err != nil {
 		return nil, fmt.Errorf("query to get item with id %d failed: %w", id, err)
 	}
@@ -98,7 +99,7 @@ func (s *DbStore) Get(id uint) (*Item, error) {
 
 // Create adds the given item to the store.
 func (s *DbStore) Create(item *Item) error {
-	_, err := s.db.Exec(`INSERT INTO items (show_id, watched) VALUES (? ,?)`, item.ShowID, item.Watched)
+	_, err := s.db.Exec(`INSERT INTO items (show_id, type, watched) VALUES (?, ?, ?)`, item.ShowID, item.Type, item.Watched)
 	if err != nil {
 		return fmt.Errorf("create item %+v failed: %w", item, err)
 	}

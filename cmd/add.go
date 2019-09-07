@@ -49,7 +49,8 @@ func add(args []string, prompter common.Prompter, client common.Client, store co
 		selected = shows[i]
 	}
 
-	err = store.Create(&common.Item{ShowID: selected.ID})
+	err = store.Create(&common.Item{ShowID: selected.ID, Type: selected.Type})
+
 	if err != nil {
 		return err
 	}

@@ -39,7 +39,7 @@ func makeItems(t *testing.T, showIDs ...int) []*Item {
 
 	result := make([]*Item, len(showIDs))
 	for i, id := range showIDs {
-		result[i] = &Item{ShowID: id}
+		result[i] = &Item{ShowID: id, Type: MovieType}
 	}
 	return result
 }
@@ -140,7 +140,7 @@ func TestDbStore_Create(t *testing.T) {
 		item    *Item
 		wantErr bool
 	}{
-		{"valid item", &Item{ShowID: 1}, false},
+		{"valid item", &Item{ShowID: 1, Type: MovieType}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

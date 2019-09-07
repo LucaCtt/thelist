@@ -2,16 +2,26 @@ package common
 
 import "time"
 
+const (
+	// MovieType is used to identify a show as a movie
+	MovieType = "Movie"
+
+	// TvShowType is used to identify a show as a tv show.
+	TvShowType = "Tv Show"
+)
+
 // Item represents an item of the show list.
 type Item struct {
-	ID      uint `json:"id"`
-	ShowID  int  `json:"show_id"`
-	Watched bool `json:"watched"`
+	ID      uint
+	Type    string
+	ShowID  int
+	Watched bool
 }
 
 // Show represents a movie or a tv series.
 type Show struct {
 	ID          int
+	Type        string
 	Name        string
 	ReleaseDate time.Time
 	Popularity  float32

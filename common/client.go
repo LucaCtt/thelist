@@ -63,6 +63,7 @@ func convertToShowsList(movies []*tmdbMovieInfo, tv []*tmdbTvInfo) ([]*Show, err
 		}
 		shows[i] = &Show{
 			ID:          movie.ID,
+			Type:        MovieType,
 			Name:        movie.Title,
 			ReleaseDate: releaseDate,
 			Popularity:  movie.Popularity,
@@ -77,6 +78,7 @@ func convertToShowsList(movies []*tmdbMovieInfo, tv []*tmdbTvInfo) ([]*Show, err
 		}
 		shows[i+len(movies)] = &Show{
 			ID:          tv.ID,
+			Type:        TvShowType,
 			Name:        tv.Name,
 			ReleaseDate: firstAirDate,
 			Popularity:  tv.Popularity,

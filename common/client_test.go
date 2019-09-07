@@ -53,12 +53,12 @@ func makeMovieResult(t *testing.T, names ...string) *tmdbMovieSearchResult {
 	}
 }
 
-func makeShows(t *testing.T, names ...string) []*Show {
+func makeShows(t *testing.T, showType ShowType, names ...string) []*Show {
 	t.Helper()
 
 	result := make([]*Show, len(names))
 	for i, name := range names {
-		result[i] = &Show{Name: name, ReleaseDate: testTime}
+		result[i] = &Show{Name: name, Type: showType, ReleaseDate: testTime}
 	}
 	return result
 }
@@ -91,7 +91,7 @@ func TestTMDbClient_Search(t *testing.T) {
 				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(makeTvResult(t, "test3", "test4"))
 			},
-			want:    makeShows(t, "test1", "test2", "test3", "test4"),
+			want:    append(makeShows(t, MovieType, "test1", "test2"), makeShows(t, TvShowType, "test3", "test4")...),
 			wantErr: false,
 		},
 		{
