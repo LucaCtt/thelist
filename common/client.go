@@ -9,12 +9,14 @@ import (
 
 // Client allows to retrieve info about shows.
 type Client interface {
-	Search(name string) ([]*Show, error)
+	SearchMovie(name string) ([]*Movie, error)
+	SearchTvShow(name string) ([]*TvShow, error)
+	GetMovie(id int) (*Movie, error)
+	GetTvShow(id int) (*TvShow, error)
 }
 
 // BaseURL is the base url of the TMDb API.
 const BaseURL = "https://api.themoviedb.org/3"
-const tmdbDateFormat = "2006-01-02"
 
 // TMDbClient allows to communicate with the TMDb API.
 type TMDbClient struct {
@@ -23,19 +25,20 @@ type TMDbClient struct {
 	key     string
 }
 
-type tmdbMovieSearchResult struct {
-	Results []*tmdbMovieInfo `json:"results"`
+type movieSearchResult struct {
+	Results []*Movie `json:"results"`
 }
 
-type tmdbTvSearchResult struct {
-	Results []*tmdbTvInfo `json:"results"`
+type tvSearchResult struct {
+	Results []*TvShow `json:"results"`
 }
 
-type tmdbError struct {
+type errorResult struct {
 	StatusMessage string `json:"status_message"`
 }
 
-type tmdbMovieInfo struct {
+// Movie represents a movie as returned by the TMDb API.
+type Movie struct {
 	ID          int     `json:"id"`
 	Title       string  `json:"title"`
 	ReleaseDate string  `json:"release_date"`
@@ -43,50 +46,13 @@ type tmdbMovieInfo struct {
 	VoteAverage float32 `json:"vote_average"`
 }
 
-type tmdbTvInfo struct {
+// TvShow represents a tv show as returned by the TMDb API.
+type TvShow struct {
 	ID           int     `json:"id"`
 	Name         string  `json:"name"`
 	FirstAirDate string  `json:"first_air_date"`
 	Popularity   float32 `json:"popularity"`
 	VoteAverage  float32 `json:"vote_average"`
-}
-
-// convertToShowList wraps the results of the TMDb API library into the
-// ShowSearchResult struct.
-func convertToShowsList(movies []*tmdbMovieInfo, tv []*tmdbTvInfo) ([]*Show, error) {
-	shows := make([]*Show, len(movies)+len(tv))
-
-	for i, movie := range movies {
-		releaseDate, err := time.Parse(tmdbDateFormat, movie.ReleaseDate)
-		if err != nil {
-			return nil, fmt.Errorf("parse movie release date failed: %w", err)
-		}
-		shows[i] = &Show{
-			ID:          movie.ID,
-			Type:        MovieType,
-			Name:        movie.Title,
-			ReleaseDate: releaseDate,
-			Popularity:  movie.Popularity,
-			VoteAverage: movie.VoteAverage,
-		}
-	}
-
-	for i, tv := range tv {
-		firstAirDate, err := time.Parse(tmdbDateFormat, tv.FirstAirDate)
-		if err != nil {
-			return nil, fmt.Errorf("parse tv show first air date failed: %w", err)
-		}
-		shows[i+len(movies)] = &Show{
-			ID:          tv.ID,
-			Type:        TvShowType,
-			Name:        tv.Name,
-			ReleaseDate: firstAirDate,
-			Popularity:  tv.Popularity,
-			VoteAverage: tv.VoteAverage,
-		}
-	}
-
-	return shows, nil
 }
 
 // NewTMDbClient creates a new api client using the given API authentication key.
@@ -106,7 +72,7 @@ func DefaultTMDbClient(k string) *TMDbClient {
 	})
 }
 
-func (c *TMDbClient) doRequest(url string, result interface{}) error {
+func (c *TMDbClient) get(url string, result interface{}) error {
 	r, err := c.client.Get(url)
 	if err != nil {
 		return fmt.Errorf("open connection to %s failed: %w", url, err)
@@ -116,7 +82,7 @@ func (c *TMDbClient) doRequest(url string, result interface{}) error {
 	decoder := json.NewDecoder(r.Body)
 
 	if r.StatusCode < 200 || r.StatusCode >= 300 {
-		var error tmdbError
+		var error errorResult
 		err = decoder.Decode(&error)
 		if err != nil {
 			return fmt.Errorf("decode error body failed: %w", err)
@@ -132,33 +98,56 @@ func (c *TMDbClient) doRequest(url string, result interface{}) error {
 	return nil
 }
 
-// Search searches for the given show name in both movies and tv series.
-func (c *TMDbClient) Search(name string) ([]*Show, error) {
-	moviesURL := fmt.Sprintf("%s/search/movie?api_key=%s&query=%s,", c.baseURL, c.key, name)
-	tvURL := fmt.Sprintf("%s/search/tv?api_key=%s&query=%s,", c.baseURL, c.key, name)
-	errChan := make(chan error, 2)
+// SearchMovie searches for the given movie name in the API and returns a list
+// of matching movies.
+func (c *TMDbClient) SearchMovie(name string) ([]*Movie, error) {
+	url := fmt.Sprintf("%s/search/movie?api_key=%s&query=%s", c.baseURL, c.key, name)
 
-	var movies tmdbMovieSearchResult
-	go func() {
-		errChan <- c.doRequest(moviesURL, &movies)
-	}()
-
-	var tv tmdbTvSearchResult
-	go func() {
-		errChan <- c.doRequest(tvURL, &tv)
-	}()
-
-	for i := 0; i < 2; i++ {
-		err := <-errChan
-		if err != nil {
-			return nil, fmt.Errorf("get shows failed: %w", err)
-		}
-	}
-
-	shows, err := convertToShowsList(movies.Results, tv.Results)
+	var movies movieSearchResult
+	err := c.get(url, &movies)
 	if err != nil {
-		return nil, fmt.Errorf("convert api results to shows failed: %w", err)
+		return nil, fmt.Errorf("search movies failed: %w", err)
 	}
 
-	return shows, nil
+	return movies.Results, nil
+}
+
+// SearchTvShow searches for the given tv show name in the API and returns a list
+// of matching tv shows.
+func (c *TMDbClient) SearchTvShow(name string) ([]*TvShow, error) {
+	url := fmt.Sprintf("%s/search/tv?api_key=%s&query=%s", c.baseURL, c.key, name)
+
+	var tv tvSearchResult
+	err := c.get(url, &tv)
+	if err != nil {
+		return nil, fmt.Errorf("search tv shows failed: %w", err)
+	}
+
+	return tv.Results, nil
+}
+
+// GetMovie gets info about a movie with the given id.
+func (c *TMDbClient) GetMovie(id int) (*Movie, error) {
+	url := fmt.Sprintf("%s/movie/%d?api_key=%s", c.baseURL, id, c.key)
+
+	var movie *Movie
+	err := c.get(url, &movie)
+	if err != nil {
+		return nil, fmt.Errorf("get movie failed: %w", err)
+	}
+
+	return movie, nil
+}
+
+// GetTvShow gets info about a tv show with the given id.
+func (c *TMDbClient) GetTvShow(id int) (*TvShow, error) {
+	url := fmt.Sprintf("%s/tv/%d?api_key=%s", c.baseURL, id, c.key)
+
+	var tv *TvShow
+	err := c.get(url, &tv)
+	if err != nil {
+		return nil, fmt.Errorf("get tv shows failed: %w", err)
+	}
+
+	return tv, nil
 }
