@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -24,7 +25,7 @@ func assertTvShowsEqual(t *testing.T, got, want *TvShow) {
 	}
 }
 
-func assertLen(t *testing.T, got, want int) {
+func assertLenEqual(t *testing.T, got, want int) {
 	t.Helper()
 
 	if got != want {
@@ -36,7 +37,7 @@ func assertLen(t *testing.T, got, want int) {
 func assertMoviesListEqual(t *testing.T, got, want []*Movie) {
 	t.Helper()
 
-	assertLen(t, len(got), len(want))
+	assertLenEqual(t, len(got), len(want))
 	for i, s := range got {
 		if !reflect.DeepEqual(s, want[i]) {
 			t.Errorf("got[%d] %+v, want[%d] %+v", i, s, i, want[i])
@@ -47,7 +48,7 @@ func assertMoviesListEqual(t *testing.T, got, want []*Movie) {
 func assertTvShowsListEqual(t *testing.T, got, want []*TvShow) {
 	t.Helper()
 
-	assertLen(t, len(got), len(want))
+	assertLenEqual(t, len(got), len(want))
 	for i, s := range got {
 		if !reflect.DeepEqual(s, want[i]) {
 			t.Errorf("got[%d] %+v, want[%d] %+v", i, s, i, want[i])
@@ -311,20 +312,31 @@ func TestTMDbClient_GetTvShow(t *testing.T) {
 		})
 	}
 }
+
+func randomString(len int) string {
+	bytes := make([]byte, len)
+	for i := 0; i < len; i++ {
+		bytes[i] = byte(rand.Int())
+	}
+	return string(bytes)
+}
+
 func BenchmarkTMDbClient_SearchMovie(b *testing.B) {
+	const len = 100
+
+	data := make([]*Movie, len)
+	for i := 0; i < len; i++ {
+		id := rand.Int()
+		data[i] = &Movie{
+			ID:    id,
+			Title: randomString(10),
+		}
+	}
+
 	c := getTestClient(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(&movieSearchResult{
-			Results: []*Movie{
-				&Movie{
-					ID:    1,
-					Title: "test1",
-				},
-				&Movie{
-					ID:    1,
-					Title: "test2",
-				},
-			},
+			Results: data,
 		})
 	})
 
@@ -334,19 +346,21 @@ func BenchmarkTMDbClient_SearchMovie(b *testing.B) {
 }
 
 func BenchmarkTMDbClient_SearchTvShow(b *testing.B) {
+	const len = 100
+
+	data := make([]*TvShow, len)
+	for i := 0; i < len; i++ {
+		id := rand.Int()
+		data[i] = &TvShow{
+			ID:   id,
+			Name: randomString(10),
+		}
+	}
+
 	c := getTestClient(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(&tvSearchResult{
-			Results: []*TvShow{
-				&TvShow{
-					ID:   1,
-					Name: "test1",
-				},
-				&TvShow{
-					ID:   1,
-					Name: "test2",
-				},
-			},
+			Results: data,
 		})
 	})
 

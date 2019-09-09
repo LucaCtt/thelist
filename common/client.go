@@ -18,6 +18,9 @@ type Client interface {
 // BaseURL is the base url of the TMDb API.
 const BaseURL = "https://api.themoviedb.org/3"
 
+// DateFormat is the date format used by the TMDb API.
+const DateFormat = "2006-01-02"
+
 // TMDbClient allows to communicate with the TMDb API.
 type TMDbClient struct {
 	client  *http.Client
@@ -146,7 +149,7 @@ func (c *TMDbClient) GetTvShow(id int) (*TvShow, error) {
 	var tv *TvShow
 	err := c.get(url, &tv)
 	if err != nil {
-		return nil, fmt.Errorf("get tv shows failed: %w", err)
+		return nil, fmt.Errorf("get tv show failed: %w", err)
 	}
 
 	return tv, nil

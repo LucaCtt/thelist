@@ -10,16 +10,85 @@ type Client struct {
 	mock.Mock
 }
 
-// Search provides a mock function with given fields: name
-func (_m *Client) Search(name string) ([]*common.Show, error) {
+// GetMovie provides a mock function with given fields: id
+func (_m *Client) GetMovie(id int) (*common.Movie, error) {
+	ret := _m.Called(id)
+
+	var r0 *common.Movie
+	if rf, ok := ret.Get(0).(func(int) *common.Movie); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*common.Movie)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetTvShow provides a mock function with given fields: id
+func (_m *Client) GetTvShow(id int) (*common.TvShow, error) {
+	ret := _m.Called(id)
+
+	var r0 *common.TvShow
+	if rf, ok := ret.Get(0).(func(int) *common.TvShow); ok {
+		r0 = rf(id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*common.TvShow)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(int) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SearchMovie provides a mock function with given fields: name
+func (_m *Client) SearchMovie(name string) ([]*common.Movie, error) {
 	ret := _m.Called(name)
 
-	var r0 []*common.Show
-	if rf, ok := ret.Get(0).(func(string) []*common.Show); ok {
+	var r0 []*common.Movie
+	if rf, ok := ret.Get(0).(func(string) []*common.Movie); ok {
 		r0 = rf(name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*common.Show)
+			r0 = ret.Get(0).([]*common.Movie)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// SearchTvShow provides a mock function with given fields: name
+func (_m *Client) SearchTvShow(name string) ([]*common.TvShow, error) {
+	ret := _m.Called(name)
+
+	var r0 []*common.TvShow
+	if rf, ok := ret.Get(0).(func(string) []*common.TvShow); ok {
+		r0 = rf(name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*common.TvShow)
 		}
 	}
 
