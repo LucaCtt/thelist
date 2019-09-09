@@ -11,7 +11,7 @@ func assertErr(t *testing.T, got error, want bool) {
 	}
 }
 
-func assertEquals(t *testing.T, got, want *Item) {
+func assertItemsEqual(t *testing.T, got, want *Item) {
 	t.Helper()
 
 	if got == nil && want == nil {
@@ -20,26 +20,23 @@ func assertEquals(t *testing.T, got, want *Item) {
 
 	if got == nil ||
 		want == nil ||
-		got.ShowID != want.ShowID ||
-		got.Watched != want.Watched {
+		got.ShowID != want.ShowID {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
 }
 
-func assertEqualsAll(t *testing.T, got, want []*Item) {
+func assertItemsListsEqual(t *testing.T, got, want []*Item) {
 	t.Helper()
 
 	for i, item := range got {
-		assertEquals(t, item, want[i])
+		assertItemsEqual(t, item, want[i])
 	}
 }
 
-func makeItems(t *testing.T, showIDs ...int) []*Item {
-	t.Helper()
-
-	result := make([]*Item, len(showIDs))
-	for i, id := range showIDs {
-		result[i] = &Item{ShowID: id, Type: MovieType}
+func genItems(len int) []*Item {
+	result := make([]*Item, len)
+	for i := 0; i < len; i++ {
+		result[i] = &Item{ShowID: i + 1, Type: MovieType}
 	}
 	return result
 }
@@ -95,7 +92,7 @@ func TestDbStore_All(t *testing.T) {
 		wantErr bool
 	}{
 		{"empty db", []*Item{}, []*Item{}, false},
-		{"items in db", makeItems(t, 1, 2), makeItems(t, 1, 2), false},
+		{"items in db", genItems(2), genItems(2), false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -105,7 +102,7 @@ func TestDbStore_All(t *testing.T) {
 
 			got, err := s.All()
 			assertErr(t, err, tt.wantErr)
-			assertEqualsAll(t, got, tt.want)
+			assertItemsListsEqual(t, got, tt.want)
 		})
 	}
 }
@@ -119,7 +116,7 @@ func TestDbStore_Get(t *testing.T) {
 		wantErr bool
 	}{
 		{"item doesn't exist", []*Item{}, 1, nil, true},
-		{"item exists", makeItems(t, 1), 1, &Item{ID: 1, ShowID: 1, Watched: false}, false},
+		{"item exists", genItems(1), 1, genItems(1)[0], false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -129,7 +126,7 @@ func TestDbStore_Get(t *testing.T) {
 
 			got, err := s.Get(tt.id)
 			assertErr(t, err, tt.wantErr)
-			assertEquals(t, got, tt.want)
+			assertItemsEqual(t, got, tt.want)
 		})
 	}
 }
@@ -151,34 +148,7 @@ func TestDbStore_Create(t *testing.T) {
 			assertErr(t, err, tt.wantErr)
 
 			got, _ := s.Get(1)
-			assertEquals(t, got, tt.item)
-		})
-	}
-}
-
-func TestDbStore_SetWatched(t *testing.T) {
-	tests := []struct {
-		name    string
-		items   []*Item
-		id      uint
-		watched bool
-		want    *Item
-		wantErr bool
-	}{
-		{"item doesn't exist", []*Item{}, 1, false, nil, true},
-		{"item exists", makeItems(t, 1), 1, true, &Item{ID: 1, ShowID: 1, Watched: true}, false},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s, _ := NewDbStore(":memory:")
-			defer s.Close()
-			seedStore(t, s, tt.items)
-
-			err := s.SetWatched(tt.id, tt.watched)
-			assertErr(t, err, tt.wantErr)
-
-			got, _ := s.Get(tt.id)
-			assertEquals(t, got, tt.want)
+			assertItemsEqual(t, got, tt.item)
 		})
 	}
 }
@@ -190,7 +160,7 @@ func TestDbStore_Delete(t *testing.T) {
 		id      uint
 		wantErr bool
 	}{
-		{"valid item", makeItems(t, 1), 1, false},
+		{"valid item", genItems(1), 1, false},
 		{"item doesn't exist", []*Item{}, 1, true},
 	}
 	for _, tt := range tests {
@@ -203,7 +173,7 @@ func TestDbStore_Delete(t *testing.T) {
 			assertErr(t, err, tt.wantErr)
 
 			got, _ := s.Get(tt.id)
-			assertEquals(t, got, nil)
+			assertItemsEqual(t, got, nil)
 		})
 	}
 }

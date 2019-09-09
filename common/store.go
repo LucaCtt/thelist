@@ -17,10 +17,9 @@ const (
 
 // Item represents an item of the show list.
 type Item struct {
-	ID      uint
-	Type    string
-	ShowID  int
-	Watched bool
+	ID     uint
+	Type   string
+	ShowID int
 }
 
 // Store represents a generic data store, which can be a database, a file, and so on.
@@ -30,7 +29,6 @@ type Store interface {
 	All() ([]*Item, error)
 	Get(id uint) (*Item, error)
 	Create(item *Item) error
-	SetWatched(id uint, watched bool) error
 	Delete(id uint) error
 }
 
@@ -55,8 +53,7 @@ func NewDbStore(path string) (*DbStore, error) {
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS items (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		type STRING NOT NULL,
-		show_id INTEGER NOT NULL,
-		watched BOOLEAN NOT NULL CHECK (watched IN (0,1))
+		show_id INTEGER NOT NULL
 		)`)
 	if err != nil {
 		return nil, fmt.Errorf("query to create items table failed: %w", err)
@@ -66,7 +63,7 @@ func NewDbStore(path string) (*DbStore, error) {
 }
 
 // Close closes the store. Should be deferred.
-// Closing multiple times a store has no effect.
+// Closing the store multiple times has no effect.
 func (s *DbStore) Close() error {
 	err := s.db.Close()
 
@@ -88,7 +85,7 @@ func (s *DbStore) All() ([]*Item, error) {
 	var items []*Item
 	for rows.Next() {
 		var item Item
-		err = rows.Scan(&item.ID, &item.Type, &item.ShowID, &item.Watched)
+		err = rows.Scan(&item.ID, &item.Type, &item.ShowID)
 		if err != nil {
 			return nil, fmt.Errorf("scan item row failed: %w", err)
 		}
@@ -105,7 +102,7 @@ func (s *DbStore) All() ([]*Item, error) {
 // Get returns the item found with the given id, or an error if there is no such item.
 func (s *DbStore) Get(id uint) (*Item, error) {
 	var item Item
-	err := s.db.QueryRow("SELECT * FROM items WHERE id = ?", id).Scan(&item.ID, &item.Type, &item.ShowID, &item.Watched)
+	err := s.db.QueryRow("SELECT * FROM items WHERE id = ?", id).Scan(&item.ID, &item.Type, &item.ShowID)
 	if err != nil {
 		return nil, fmt.Errorf("query to get item with id %d failed: %w", id, err)
 	}
@@ -115,33 +112,9 @@ func (s *DbStore) Get(id uint) (*Item, error) {
 
 // Create adds the given item to the store.
 func (s *DbStore) Create(item *Item) error {
-	_, err := s.db.Exec(`INSERT INTO items (show_id, type, watched) VALUES (?, ?, ?)`, item.ShowID, item.Type, item.Watched)
+	_, err := s.db.Exec(`INSERT INTO items (show_id, type) VALUES (?, ?)`, item.ShowID, item.Type)
 	if err != nil {
 		return fmt.Errorf("create item %+v failed: %w", item, err)
-	}
-
-	return nil
-}
-
-// SetWatched sets the "watched" field of the item with the given id to the value passed as argument.
-// If the item is not found, it will return an error.
-func (s *DbStore) SetWatched(id uint, watched bool) error {
-	value := 1
-	if !watched {
-		value = 0
-	}
-
-	r, err := s.db.Exec("UPDATE items SET watched = ? WHERE id = ?", value, id)
-	if err != nil {
-		return fmt.Errorf("set watched of item with id %d to %t failed: %w", id, watched, err)
-	}
-
-	affected, err := r.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("retrieve affected rows failed: %w", err)
-	}
-	if affected == 0 {
-		return fmt.Errorf("item with id %d not found", id)
 	}
 
 	return nil
