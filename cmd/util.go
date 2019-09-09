@@ -12,16 +12,16 @@ type Show struct {
 	ID          int
 	Type        string
 	Name        string
-	ReleaseDate time.Time
+	Year        int
 	VoteAverage float32
 }
 
-func parseDate(date string) time.Time {
+func parseYear(date string) int {
 	parsed, err := time.Parse(common.DateFormat, date)
 	if err != nil {
-		panic(fmt.Errorf("parse date failed: %w", err))
+		return 0
 	}
-	return parsed
+	return parsed.Year()
 }
 
 func movieToShow(movie *common.Movie) *Show {
@@ -29,7 +29,7 @@ func movieToShow(movie *common.Movie) *Show {
 		ID:          movie.ID,
 		Type:        common.MovieType,
 		Name:        movie.Title,
-		ReleaseDate: parseDate(movie.ReleaseDate),
+		Year:        parseYear(movie.ReleaseDate),
 		VoteAverage: movie.VoteAverage,
 	}
 }
@@ -39,7 +39,7 @@ func tvToShow(tv *common.TvShow) *Show {
 		ID:          tv.ID,
 		Type:        common.TvShowType,
 		Name:        tv.Name,
-		ReleaseDate: parseDate(tv.FirstAirDate),
+		Year:        parseYear(tv.FirstAirDate),
 		VoteAverage: tv.VoteAverage,
 	}
 }

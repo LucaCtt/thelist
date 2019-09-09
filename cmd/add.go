@@ -35,7 +35,11 @@ func add(args []string, p common.Prompter, c common.Client, s common.Store) erro
 
 	options := make([]string, len(shows))
 	for i, s := range shows {
-		options[i] = fmt.Sprintf("%s (%d)", s.Name, s.ReleaseDate.Year())
+		if s.Year == 0 {
+			options[i] = fmt.Sprintf("%s", s.Name)
+			continue
+		}
+		options[i] = fmt.Sprintf("%s (%d)", s.Name, s.Year)
 	}
 
 	var selected *Show
