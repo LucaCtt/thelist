@@ -1,12 +1,14 @@
 package cmd
 
 const (
-	appName    = "thelist"
-	configName = "config"
-	configPath = "$HOME/" + appName
+	appName = "thelist"
 
-	dbPathOpt     = "dbpath"
-	dbPathDefault = "./" + appName + ".db"
+	cfgOpt      = "config"
+	cfgShort    = "c"
+	cfgUsage    = "Set config file"
+	cfgFileName = "." + appName
+
+	dbPathOpt = "dbpath"
 
 	serverPortOpt     = "server"
 	serverPortDefault = "9000"
@@ -23,7 +25,7 @@ const (
 	apiKeyUsage = "TMDB api key"
 
 	rootCmdUse   = appName
-	rootCmdShort = "an app to list shows to watch."
+	rootCmdShort = "An app to list shows to watch."
 	rootCmdLong  = "An app to list shows to watch. It has both a cli and a web interface."
 
 	webCmdUse      = "web"
