@@ -37,6 +37,7 @@ type tvSearchResult struct {
 }
 
 type errorResult struct {
+	StatusCode    int    `json:"status_code"`
 	StatusMessage string `json:"status_message"`
 }
 
@@ -85,12 +86,12 @@ func (c *TMDbClient) get(url string, result interface{}) error {
 	decoder := json.NewDecoder(r.Body)
 
 	if r.StatusCode < 200 || r.StatusCode >= 300 {
-		var error errorResult
-		err = decoder.Decode(&error)
+		var errRes errorResult
+		err = decoder.Decode(&errRes)
 		if err != nil {
 			return fmt.Errorf("decode error body failed: %w", err)
 		}
-		return fmt.Errorf(error.StatusMessage)
+		return fmt.Errorf("error %d: %q", errRes.StatusCode, errRes.StatusMessage)
 	}
 
 	err = decoder.Decode(&result)

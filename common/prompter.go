@@ -23,13 +23,13 @@ func (c *CliPrompter) Input(label string) (string, error) {
 		Message: label,
 	}
 
-	var show string
-	err := survey.AskOne(prompt, &show)
+	var input string
+	err := survey.AskOne(prompt, &input)
 	if err != nil {
 		return "", fmt.Errorf("prompt input failed: %w", err)
 	}
 
-	return show, nil
+	return input, nil
 }
 
 // Select allows the user to select a single option between the available ones.

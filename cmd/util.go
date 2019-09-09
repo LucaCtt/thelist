@@ -19,7 +19,7 @@ type Show struct {
 func parseDate(date string) time.Time {
 	parsed, err := time.Parse(common.DateFormat, date)
 	if err != nil {
-		panic(fmt.Errorf("parse movie release date failed: %w", err))
+		panic(fmt.Errorf("parse date failed: %w", err))
 	}
 	return parsed
 }
