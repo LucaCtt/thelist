@@ -7,6 +7,22 @@ import (
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
+const (
+	// MovieType is used to identify a show as a movie
+	MovieType = "Movie"
+
+	// TvShowType is used to identify a show as a tv show.
+	TvShowType = "Tv Show"
+)
+
+// Item represents an item of the show list.
+type Item struct {
+	ID      uint
+	Type    string
+	ShowID  int
+	Watched bool
+}
+
 // Store represents a generic data store, which can be a database, a file, and so on.
 // The Close method should always be called to close the store.
 type Store interface {

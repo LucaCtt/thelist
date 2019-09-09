@@ -9,13 +9,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-func add(args []string, prompter common.Prompter, client common.Client, store common.Store) error {
+func add(args []string, p common.Prompter, c common.Client, s common.Store) error {
 	var name string
 
 	if len(args) != 0 {
 		name = args[0]
 	} else {
-		input, err := prompter.Input("Show name")
+		input, err := p.Input("Show name")
 		if err != nil {
 			return fmt.Errorf("prompt show name failed: %w", err)
 		}
@@ -25,7 +25,7 @@ func add(args []string, prompter common.Prompter, client common.Client, store co
 		name = input
 	}
 
-	shows, err := client.Search(name)
+	shows, err := getShows(c, name)
 	if err != nil {
 		return fmt.Errorf("search show failed: %w", err)
 	}
@@ -38,18 +38,18 @@ func add(args []string, prompter common.Prompter, client common.Client, store co
 		options[i] = fmt.Sprintf("%s (%d)", s.Name, s.ReleaseDate.Year())
 	}
 
-	var selected *common.Show
+	var selected *Show
 	if len(shows) == 1 {
 		selected = shows[0]
 	} else {
-		i, err := prompter.Select(fmt.Sprintf("Found %d results", len(shows)), options)
+		i, err := p.Select(fmt.Sprintf("Found %d results", len(shows)), options)
 		if err != nil {
 			return err
 		}
 		selected = shows[i]
 	}
 
-	err = store.Create(&common.Item{ShowID: selected.ID, Type: selected.Type})
+	err = s.Create(&common.Item{ShowID: selected.ID, Type: selected.Type})
 
 	if err != nil {
 		return err
