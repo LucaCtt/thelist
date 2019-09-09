@@ -25,7 +25,7 @@ func add(args []string, p common.Prompter, c common.Client, s common.Store) erro
 		name = input
 	}
 
-	shows, err := getShows(c, name)
+	shows, err := searchShow(c, name)
 	if err != nil {
 		return fmt.Errorf("search show failed: %w", err)
 	}
