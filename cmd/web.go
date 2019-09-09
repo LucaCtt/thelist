@@ -21,7 +21,7 @@ func startServer() {
 	router := router.New(dbStore)
 	port := viper.GetString(serverPortOpt)
 
-	log.Printf(webCmdStartMsg, port)
+	log.Print(webCmdStartMsg)
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
