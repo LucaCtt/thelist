@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/LucaCtt/thelist/errors"
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
@@ -42,12 +43,12 @@ type DbStore struct {
 func NewDbStore(path string) (*DbStore, error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
-		return nil, fmt.Errorf("open db at path %q failed: %w", path, err)
+		return nil, errors.E(fmt.Sprintf("open db at path %q failed", path), err)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		return nil, fmt.Errorf("ping db at path %q failed: %w", path, err)
+		return nil, errors.E(fmt.Sprintf("ping db at path %q failed", path), err)
 	}
 
 	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS items (
@@ -56,7 +57,7 @@ func NewDbStore(path string) (*DbStore, error) {
 		show_id INTEGER NOT NULL
 		)`)
 	if err != nil {
-		return nil, fmt.Errorf("query to create items table failed: %w", err)
+		return nil, errors.E("query to create items table failed", err)
 	}
 
 	return &DbStore{db}, nil
