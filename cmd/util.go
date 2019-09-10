@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/LucaCtt/thelist/common"
+	"github.com/LucaCtt/thelist/common/client"
+	"github.com/LucaCtt/thelist/common/store"
 )
 
 // Show is a common representation for movies and tv series.
@@ -17,34 +18,34 @@ type Show struct {
 }
 
 func parseYear(date string) int {
-	parsed, err := time.Parse(common.DateFormat, date)
+	parsed, err := time.Parse(client.DateFormat, date)
 	if err != nil {
 		return 0
 	}
 	return parsed.Year()
 }
 
-func movieToShow(movie *common.Movie) *Show {
+func movieToShow(movie *client.Movie) *Show {
 	return &Show{
 		ID:          movie.ID,
-		Type:        common.MovieType,
+		Type:        store.MovieType,
 		Name:        movie.Title,
 		Year:        parseYear(movie.ReleaseDate),
 		VoteAverage: movie.VoteAverage,
 	}
 }
 
-func tvToShow(tv *common.TvShow) *Show {
+func tvToShow(tv *client.TvShow) *Show {
 	return &Show{
 		ID:          tv.ID,
-		Type:        common.TvShowType,
+		Type:        store.TvShowType,
 		Name:        tv.Name,
 		Year:        parseYear(tv.FirstAirDate),
 		VoteAverage: tv.VoteAverage,
 	}
 }
 
-func convertToShowsList(movies []*common.Movie, tv []*common.TvShow) []*Show {
+func convertToShowsList(movies []*client.Movie, tv []*client.TvShow) []*Show {
 	shows := make([]*Show, len(movies)+len(tv))
 
 	for i, movie := range movies {
@@ -58,17 +59,17 @@ func convertToShowsList(movies []*common.Movie, tv []*common.TvShow) []*Show {
 	return shows
 }
 
-func getShow(c common.Client, id int, t string) (*Show, error) {
+func getShow(c client.Client, id int, t string) (*Show, error) {
 	var show *Show
 
 	switch t {
-	case common.MovieType:
+	case store.MovieType:
 		movie, err := c.GetMovie(id)
 		if err != nil {
 			return nil, fmt.Errorf("get show with id %d and type %q failed: %w", id, t, err)
 		}
 		show = movieToShow(movie)
-	case common.TvShowType:
+	case store.TvShowType:
 		tv, err := c.GetTvShow(id)
 		if err != nil {
 			return nil, fmt.Errorf("get show with id %d and type %q failed: %w", id, t, err)
@@ -81,9 +82,9 @@ func getShow(c common.Client, id int, t string) (*Show, error) {
 	return show, nil
 }
 
-func searchShow(c common.Client, name string) ([]*Show, error) {
-	moviesChan := make(chan []*common.Movie)
-	tvChan := make(chan []*common.TvShow)
+func searchShow(c client.Client, name string) ([]*Show, error) {
+	moviesChan := make(chan []*client.Movie)
+	tvChan := make(chan []*client.TvShow)
 	errChan := make(chan error)
 
 	go func() {

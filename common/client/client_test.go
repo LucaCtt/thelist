@@ -1,4 +1,4 @@
-package common
+package client
 
 import (
 	"encoding/json"
@@ -8,6 +8,13 @@ import (
 	"reflect"
 	"testing"
 )
+
+func assertErr(t *testing.T, got error, want bool) {
+	t.Helper()
+	if (got != nil) != want {
+		t.Fatalf("got %q, wantErr %t", got, want)
+	}
+}
 
 func assertMoviesEqual(t *testing.T, got, want *Movie) {
 	t.Helper()
@@ -96,7 +103,7 @@ func makeTvShows(names ...string) []*TvShow {
 
 func getTestClient(handler http.HandlerFunc) *TMDbClient {
 	server := httptest.NewServer(handler)
-	return NewTMDbClient("test", server.URL, server.Client())
+	return Custom("test", server.URL, server.Client())
 }
 
 func TestTMDbClient_SearchMovie(t *testing.T) {
@@ -161,7 +168,7 @@ func TestTMDbClient_SearchMovie(t *testing.T) {
 		})
 	}
 	t.Run("invalid baseurl", func(t *testing.T) {
-		c := NewTMDbClient("test", "localhost:999999", &http.Client{})
+		c := Custom("test", "localhost:999999", &http.Client{})
 		got, err := c.SearchMovie("test")
 		assertErr(t, err, true)
 		assertMoviesListEqual(t, got, []*Movie{})
@@ -230,7 +237,7 @@ func TestTMDbClient_SearchTvShow(t *testing.T) {
 		})
 	}
 	t.Run("invalid baseurl", func(t *testing.T) {
-		c := NewTMDbClient("test", "localhost:999999", &http.Client{})
+		c := Custom("test", "localhost:999999", &http.Client{})
 		got, err := c.SearchTvShow("test")
 		assertErr(t, err, true)
 		assertTvShowsListEqual(t, got, []*TvShow{})
@@ -319,52 +326,4 @@ func randomString(len int) string {
 		bytes[i] = byte(rand.Int())
 	}
 	return string(bytes)
-}
-
-func BenchmarkTMDbClient_SearchMovie(b *testing.B) {
-	const len = 100
-
-	data := make([]*Movie, len)
-	for i := 0; i < len; i++ {
-		id := rand.Int()
-		data[i] = &Movie{
-			ID:    id,
-			Title: randomString(10),
-		}
-	}
-
-	c := getTestClient(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(&movieSearchResult{
-			Results: data,
-		})
-	})
-
-	for i := 0; i < b.N; i++ {
-		c.SearchMovie("test")
-	}
-}
-
-func BenchmarkTMDbClient_SearchTvShow(b *testing.B) {
-	const len = 100
-
-	data := make([]*TvShow, len)
-	for i := 0; i < len; i++ {
-		id := rand.Int()
-		data[i] = &TvShow{
-			ID:   id,
-			Name: randomString(10),
-		}
-	}
-
-	c := getTestClient(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(&tvSearchResult{
-			Results: data,
-		})
-	})
-
-	for i := 0; i < b.N; i++ {
-		c.SearchTvShow("test")
-	}
 }

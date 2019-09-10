@@ -1,4 +1,4 @@
-package common
+package store
 
 import (
 	"testing"
@@ -60,7 +60,7 @@ func TestNewDbStore(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, err := NewDbStore(tt.path)
+			s, err := New(tt.path)
 			assertErr(t, err, tt.wantErr)
 			if s != nil {
 				s.Close()
@@ -71,13 +71,13 @@ func TestNewDbStore(t *testing.T) {
 
 func TestDbStore_Close(t *testing.T) {
 	t.Run("no error", func(t *testing.T) {
-		s, _ := NewDbStore(":memory:")
+		s, _ := New(":memory:")
 		err := s.Close()
 		assertErr(t, err, false)
 	})
 
 	t.Run("already closed", func(t *testing.T) {
-		s, _ := NewDbStore(":memory:")
+		s, _ := New(":memory:")
 		s.Close()
 		err := s.Close()
 		assertErr(t, err, false)
@@ -96,7 +96,7 @@ func TestDbStore_All(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, _ := NewDbStore(":memory:")
+			s, _ := New(":memory:")
 			defer s.Close()
 			seedStore(t, s, tt.items)
 
@@ -120,7 +120,7 @@ func TestDbStore_Get(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, _ := NewDbStore(":memory:")
+			s, _ := New(":memory:")
 			defer s.Close()
 			seedStore(t, s, tt.items)
 
@@ -141,7 +141,7 @@ func TestDbStore_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, _ := NewDbStore(":memory:")
+			s, _ := New(":memory:")
 			defer s.Close()
 
 			err := s.Create(tt.item)
@@ -165,7 +165,7 @@ func TestDbStore_Delete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, _ := NewDbStore(":memory:")
+			s, _ := New(":memory:")
 			defer s.Close()
 			seedStore(t, s, tt.items)
 

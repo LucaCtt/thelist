@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/LucaCtt/thelist/common/store"
 	"github.com/go-chi/chi"
-	"github.com/LucaCtt/thelist/common"
 )
 
-func showRouter(store common.Store) http.Handler {
+func showRouter(s store.Store) http.Handler {
 	router := chi.NewRouter()
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		items, err := store.All()
+		items, err := s.All()
 		if err != nil {
 			panic(err)
 		}
@@ -26,7 +26,7 @@ func showRouter(store common.Store) http.Handler {
 			w.WriteHeader(http.StatusNotFound)
 		}
 
-		show, err := store.Get(id)
+		show, err := s.Get(id)
 		if err != nil {
 			panic(err)
 		}
@@ -35,14 +35,14 @@ func showRouter(store common.Store) http.Handler {
 	})
 
 	router.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		var show common.Item
+		var show store.Item
 		err := json.NewDecoder(r.Body).Decode(&show)
 		if err != nil {
 			w.WriteHeader(http.StatusNotAcceptable)
 			return
 		}
 
-		err = store.Create(&show)
+		err = s.Create(&show)
 		if err != nil {
 			panic(err)
 		}
@@ -57,7 +57,7 @@ func showRouter(store common.Store) http.Handler {
 			return
 		}
 
-		err = store.Delete(id)
+		err = s.Delete(id)
 		if err != nil {
 			panic(err)
 		}

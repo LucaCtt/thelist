@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/LucaCtt/thelist/common"
+	"github.com/LucaCtt/thelist/common/client"
+	"github.com/LucaCtt/thelist/common/store"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func list(p common.Prompter, c common.Client, s common.Store) error {
+func list(p Prompt, c client.Client, s store.Store) error {
 	items, err := s.All()
 	if err != nil {
 		return fmt.Errorf("get items from store failed: %w", err)
@@ -60,15 +61,15 @@ var listCmd = &cobra.Command{
 	Short: listCmdShort,
 	Long:  listCmdLong,
 	Run: func(cmd *cobra.Command, args []string) {
-		dbStore, err := common.NewDbStore(viper.GetString(dbPathOpt))
+		dbStore, err := store.New(viper.GetString(dbPathOpt))
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer dbStore.Close()
 
-		client := common.DefaultTMDbClient(viper.GetString(apiKeyOpt))
+		client := client.New(viper.GetString(apiKeyOpt))
 
-		err = list(&common.CliPrompter{}, client, dbStore)
+		err = list(&CliPrompt{}, client, dbStore)
 		if err != nil {
 			log.Fatal(err)
 		}

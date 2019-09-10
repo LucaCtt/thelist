@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/LucaCtt/thelist/common"
+	"github.com/LucaCtt/thelist/common/client"
 	"github.com/LucaCtt/thelist/mocks"
 	"github.com/stretchr/testify/mock"
 )
@@ -18,11 +18,11 @@ func assertErr(t *testing.T, got error, wantErr bool) {
 	}
 }
 
-func genMovies(len int) []*common.Movie {
-	res := make([]*common.Movie, len)
+func genMovies(len int) []*client.Movie {
+	res := make([]*client.Movie, len)
 
 	for i := 0; i < len; i++ {
-		res[i] = &common.Movie{
+		res[i] = &client.Movie{
 			ID:          i,
 			Title:       fmt.Sprintf("test%d", i),
 			ReleaseDate: "2001-01-01",
@@ -32,11 +32,11 @@ func genMovies(len int) []*common.Movie {
 	return res
 }
 
-func genTvShows(len int) []*common.TvShow {
-	res := make([]*common.TvShow, len)
+func genTvShows(len int) []*client.TvShow {
+	res := make([]*client.TvShow, len)
 
 	for i := 0; i < len; i++ {
-		res[i] = &common.TvShow{
+		res[i] = &client.TvShow{
 			ID:           i,
 			Name:         fmt.Sprintf("test%d", i),
 			FirstAirDate: "2001-01-01",
@@ -49,13 +49,13 @@ func genTvShows(len int) []*common.TvShow {
 func Test_add(t *testing.T) {
 	t.Run("name in args", func(t *testing.T) {
 		show := "test"
-		p := &mocks.Prompter{}
+		p := &mocks.Prompt{}
 		c := &mocks.Client{}
 		s := &mocks.Store{}
 
 		s.On("Create", mock.Anything).Return(nil)
 		c.On("SearchMovie", show).Return(genMovies(1), nil)
-		c.On("SearchTvShow", show).Return([]*common.TvShow{}, nil)
+		c.On("SearchTvShow", show).Return([]*client.TvShow{}, nil)
 
 		err := add([]string{show}, p, c, s)
 
@@ -65,14 +65,14 @@ func Test_add(t *testing.T) {
 
 	t.Run("name not in args", func(t *testing.T) {
 		show := "test"
-		p := &mocks.Prompter{}
+		p := &mocks.Prompt{}
 		c := &mocks.Client{}
 		s := &mocks.Store{}
 
 		p.On("Input", mock.Anything).Return(show, nil)
 		s.On("Create", mock.Anything).Return(nil)
 		c.On("SearchMovie", show).Return(genMovies(1), nil)
-		c.On("SearchTvShow", show).Return([]*common.TvShow{}, nil)
+		c.On("SearchTvShow", show).Return([]*client.TvShow{}, nil)
 
 		err := add([]string{}, p, c, s)
 
@@ -81,7 +81,7 @@ func Test_add(t *testing.T) {
 	})
 
 	t.Run("name empty", func(t *testing.T) {
-		p := &mocks.Prompter{}
+		p := &mocks.Prompt{}
 		c := &mocks.Client{}
 		s := &mocks.Store{}
 
@@ -95,12 +95,12 @@ func Test_add(t *testing.T) {
 
 	t.Run("no shows found", func(t *testing.T) {
 		show := "test"
-		p := &mocks.Prompter{}
+		p := &mocks.Prompt{}
 		c := &mocks.Client{}
 		s := &mocks.Store{}
 
-		c.On("SearchMovie", show).Return([]*common.Movie{}, nil)
-		c.On("SearchTvShow", show).Return([]*common.TvShow{}, nil)
+		c.On("SearchMovie", show).Return([]*client.Movie{}, nil)
+		c.On("SearchTvShow", show).Return([]*client.TvShow{}, nil)
 
 		err := add([]string{show}, p, c, s)
 
@@ -110,7 +110,7 @@ func Test_add(t *testing.T) {
 
 	t.Run("multiple shows found", func(t *testing.T) {
 		show := "test"
-		p := &mocks.Prompter{}
+		p := &mocks.Prompt{}
 		c := &mocks.Client{}
 		s := &mocks.Store{}
 
@@ -126,7 +126,7 @@ func Test_add(t *testing.T) {
 	})
 
 	t.Run("prompter input err", func(t *testing.T) {
-		p := &mocks.Prompter{}
+		p := &mocks.Prompt{}
 		c := &mocks.Client{}
 		s := &mocks.Store{}
 
@@ -140,7 +140,7 @@ func Test_add(t *testing.T) {
 
 	t.Run("prompter select err", func(t *testing.T) {
 		show := "test"
-		p := &mocks.Prompter{}
+		p := &mocks.Prompt{}
 		c := &mocks.Client{}
 		s := &mocks.Store{}
 
@@ -156,12 +156,12 @@ func Test_add(t *testing.T) {
 
 	t.Run("client err", func(t *testing.T) {
 		show := "test"
-		p := &mocks.Prompter{}
+		p := &mocks.Prompt{}
 		c := &mocks.Client{}
 		s := &mocks.Store{}
 
 		c.On("SearchMovie", show).Return(nil, errors.New("test"))
-		c.On("SearchTvShow", show).Return([]*common.TvShow{}, nil)
+		c.On("SearchTvShow", show).Return([]*client.TvShow{}, nil)
 
 		err := add([]string{show}, p, c, s)
 
@@ -171,13 +171,13 @@ func Test_add(t *testing.T) {
 
 	t.Run("store err", func(t *testing.T) {
 		show := "test"
-		p := &mocks.Prompter{}
+		p := &mocks.Prompt{}
 		c := &mocks.Client{}
 		s := &mocks.Store{}
 
 		s.On("Create", mock.Anything).Return(errors.New("test"))
 		c.On("SearchMovie", show).Return(genMovies(1), nil)
-		c.On("SearchTvShow", show).Return([]*common.TvShow{}, nil)
+		c.On("SearchTvShow", show).Return([]*client.TvShow{}, nil)
 
 		err := add([]string{show}, p, c, s)
 

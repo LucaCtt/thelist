@@ -1,4 +1,5 @@
-package common
+// Package store implements a data store for items.
+package store
 
 import (
 	"database/sql"
@@ -7,11 +8,9 @@ import (
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
+// Show types used to classify shows.
 const (
-	// MovieType is used to identify a show as a movie
-	MovieType = "Movie"
-
-	// TvShowType is used to identify a show as a tv show.
+	MovieType  = "Movie"
 	TvShowType = "Tv Show"
 )
 
@@ -37,9 +36,9 @@ type DbStore struct {
 	db *sql.DB
 }
 
-// NewDbStore creates a store that uses an SQLite db.
+// New creates a store that uses an SQLite db.
 // If the tables do not already exist on the db, they will be created.
-func NewDbStore(path string) (*DbStore, error) {
+func New(path string) (*DbStore, error) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return nil, fmt.Errorf("open db at path %q failed: %w", path, err)

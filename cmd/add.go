@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/LucaCtt/thelist/common"
+	"github.com/LucaCtt/thelist/common/client"
+	"github.com/LucaCtt/thelist/common/store"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func add(args []string, p common.Prompter, c common.Client, s common.Store) error {
+func add(args []string, p Prompt, c client.Client, s store.Store) error {
 	var name string
 
 	if len(args) != 0 {
@@ -53,7 +54,7 @@ func add(args []string, p common.Prompter, c common.Client, s common.Store) erro
 		selected = shows[i]
 	}
 
-	err = s.Create(&common.Item{ShowID: selected.ID, Type: selected.Type})
+	err = s.Create(&store.Item{ShowID: selected.ID, Type: selected.Type})
 
 	if err != nil {
 		return err
@@ -72,15 +73,15 @@ var addCmd = &cobra.Command{
 	Long:  addCmdLong,
 	Args:  cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		dbStore, err := common.NewDbStore(viper.GetString(dbPathOpt))
+		dbStore, err := store.New(viper.GetString(dbPathOpt))
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer dbStore.Close()
 
-		client := common.DefaultTMDbClient(viper.GetString(apiKeyOpt))
+		client := client.New(viper.GetString(apiKeyOpt))
 
-		err = add(args, &common.CliPrompter{}, client, dbStore)
+		err = add(args, &CliPrompt{}, client, dbStore)
 		if err != nil {
 			log.Fatal(err)
 		}

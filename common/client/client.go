@@ -1,4 +1,6 @@
-package common
+// Package client implements a REST API client for retrieving
+// information on shows.
+package client
 
 import (
 	"encoding/json"
@@ -15,12 +17,6 @@ type Client interface {
 	GetTvShow(id int) (*TvShow, error)
 }
 
-// BaseURL is the base url of the TMDb API.
-const BaseURL = "https://api.themoviedb.org/3"
-
-// DateFormat is the date format used by the TMDb API.
-const DateFormat = "2006-01-02"
-
 // TMDbClient allows to communicate with the TMDb API.
 type TMDbClient struct {
 	client  *http.Client
@@ -28,39 +24,14 @@ type TMDbClient struct {
 	key     string
 }
 
-type movieSearchResult struct {
-	Results []*Movie `json:"results"`
-}
+// TMDb api constants.
+const (
+	BaseURL    = "https://api.themoviedb.org/3"
+	DateFormat = "2006-01-02"
+)
 
-type tvSearchResult struct {
-	Results []*TvShow `json:"results"`
-}
-
-type errorResult struct {
-	StatusCode    int    `json:"status_code"`
-	StatusMessage string `json:"status_message"`
-}
-
-// Movie represents a movie as returned by the TMDb API.
-type Movie struct {
-	ID          int     `json:"id"`
-	Title       string  `json:"title"`
-	ReleaseDate string  `json:"release_date"`
-	Popularity  float32 `json:"popularity"`
-	VoteAverage float32 `json:"vote_average"`
-}
-
-// TvShow represents a tv show as returned by the TMDb API.
-type TvShow struct {
-	ID           int     `json:"id"`
-	Name         string  `json:"name"`
-	FirstAirDate string  `json:"first_air_date"`
-	Popularity   float32 `json:"popularity"`
-	VoteAverage  float32 `json:"vote_average"`
-}
-
-// NewTMDbClient creates a new api client using the given API authentication key.
-func NewTMDbClient(k string, baseURL string, c *http.Client) *TMDbClient {
+// Custom creates a new custom TMDb API client.
+func Custom(k string, baseURL string, c *http.Client) *TMDbClient {
 	return &TMDbClient{
 		client:  c,
 		baseURL: baseURL,
@@ -68,10 +39,10 @@ func NewTMDbClient(k string, baseURL string, c *http.Client) *TMDbClient {
 	}
 }
 
-// DefaultTMDbClient creates a new TMDb client with the default base URL and http client.
+// New creates a new TMDb API client with the default base URL and http client.
 // This is the recommended way to create a TMDb client.
-func DefaultTMDbClient(k string) *TMDbClient {
-	return NewTMDbClient(k, BaseURL, &http.Client{
+func New(k string) *TMDbClient {
+	return Custom(k, BaseURL, &http.Client{
 		Timeout: 10 * time.Second,
 	})
 }

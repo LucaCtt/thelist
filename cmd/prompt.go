@@ -1,4 +1,4 @@
-package common
+package cmd
 
 import (
 	"fmt"
@@ -6,19 +6,19 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 )
 
-// Prompter represents an user input interface.
-type Prompter interface {
+// Prompt represents an user input interface.
+type Prompt interface {
 	Input(label string) (string, error)
 	Select(label string, options []string) (int, error)
 	MultiSelect(label string, options []string) ([]int, error)
 }
 
-// CliPrompter represents a cli user input interface.
-type CliPrompter struct {
+// CliPrompt represents a cli user input interface.
+type CliPrompt struct {
 }
 
 // Input allows to ask the user for a single line input.
-func (c *CliPrompter) Input(label string) (string, error) {
+func (c *CliPrompt) Input(label string) (string, error) {
 	prompt := &survey.Input{
 		Message: label,
 	}
@@ -34,7 +34,7 @@ func (c *CliPrompter) Input(label string) (string, error) {
 
 // Select allows the user to select a single option between the available ones.
 // Will return the index of the selected option.
-func (c *CliPrompter) Select(label string, options []string) (int, error) {
+func (c *CliPrompt) Select(label string, options []string) (int, error) {
 	prompt := &survey.Select{
 		Message: label,
 		Options: options,
@@ -51,7 +51,7 @@ func (c *CliPrompter) Select(label string, options []string) (int, error) {
 
 // MultiSelect allows the user to select multiple options between the available ones.
 // Will return a slice containig the indexes of the selected options.
-func (c *CliPrompter) MultiSelect(label string, options []string) ([]int, error) {
+func (c *CliPrompt) MultiSelect(label string, options []string) ([]int, error) {
 	prompt := &survey.MultiSelect{
 		Message: label,
 		Options: options,
