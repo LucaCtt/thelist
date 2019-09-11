@@ -9,7 +9,7 @@ func E(args ...interface{}) *Error {
 		switch arg := arg.(type) {
 		case string:
 			e.Message = arg
-		case int:
+		case ErrorCode:
 			e.Code = arg
 		case ErrorSeverity:
 			e.Severity = arg
@@ -26,7 +26,7 @@ func E(args ...interface{}) *Error {
 // Code returns the errors code.
 // If it does not exist (which means err is not a pointer to Error) CodeUnexpected will be returned.
 // If the code exists but is 0, the wrapped error's code will be returned.
-func Code(err error) int {
+func Code(err error) ErrorCode {
 	e, ok := err.(*Error)
 	if !ok {
 		return CodeUnexpected

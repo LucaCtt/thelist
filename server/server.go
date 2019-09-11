@@ -48,6 +48,6 @@ func (s *Server) decode(w http.ResponseWriter, r *http.Request, out interface{})
 
 func (s *Server) error(w http.ResponseWriter, r *http.Request, e error) {
 	code := errors.Code(e)
-	http.Error(w, http.StatusText(code), code)
+	http.Error(w, http.StatusText(int(code)), int(code))
 	log.Print(e)
 }

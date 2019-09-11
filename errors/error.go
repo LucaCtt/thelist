@@ -8,17 +8,18 @@ import (
 // ErrorSeverity is used to classify the severity of an error.
 // The zero value is SeverityErr.
 type ErrorSeverity int
+type ErrorCode int
 
 // HTTP status codes used to identify errors.
 const (
-	CodeUnexpected = http.StatusInternalServerError
-	CodeNotFound   = http.StatusNotFound
-	CodeBadValue   = http.StatusBadRequest
+	CodeUnexpected ErrorCode = http.StatusInternalServerError
+	CodeNotFound   ErrorCode = http.StatusNotFound
+	CodeBadValue   ErrorCode = http.StatusBadRequest
 )
 
 // Severity levels
 const (
-	SeverityErr = iota
+	SeverityErr ErrorSeverity = iota
 	SeverityWarn
 )
 
@@ -26,7 +27,7 @@ const (
 type Error struct {
 	Message  string
 	Err      error
-	Code     int
+	Code     ErrorCode
 	Severity ErrorSeverity
 }
 
