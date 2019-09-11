@@ -1,13 +1,15 @@
 package errors
 
-func E(args ...interface{}) error {
+// E creates a new error with the given args
+// Will panic if an arg not supported by Error is passed
+func E(args ...interface{}) *Error {
 	e := &Error{}
 
 	for _, arg := range args {
 		switch arg := arg.(type) {
 		case string:
 			e.Message = arg
-		case ErrorCode:
+		case int:
 			e.Code = arg
 		case ErrorSeverity:
 			e.Severity = arg
@@ -21,7 +23,10 @@ func E(args ...interface{}) error {
 	return e
 }
 
-func Code(err error) ErrorCode {
+// Code returns the errors code.
+// If it does not exist (which means err is not a pointer to Error) CodeUnexpected will be returned.
+// If the code exists but is 0, the wrapped error's code will be returned.
+func Code(err error) int {
 	e, ok := err.(*Error)
 	if !ok {
 		return CodeUnexpected
