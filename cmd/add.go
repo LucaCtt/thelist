@@ -18,20 +18,20 @@ func add(args []string, p Prompt, c client.Client, s store.Store) error {
 	} else {
 		input, err := p.Input("Show name")
 		if err != nil {
-			return fmt.Errorf("prompt show name failed: %w", err)
+			return errors.E("prompt show name failed", err, errors.SeverityWarn)
 		}
 		if input == "" {
-			return fmt.Errorf("Invalid show name")
+			return errors.E("invalid show name")
 		}
 		name = input
 	}
 
 	shows, err := searchShow(c, name)
 	if err != nil {
-		return fmt.Errorf("search show failed: %w", err)
+		return errors.E("search show failed", err)
 	}
 	if len(shows) == 0 {
-		return fmt.Errorf("No shows found")
+		return errors.E("no shows found")
 	}
 
 	options := make([]string, len(shows))
@@ -49,15 +49,19 @@ func add(args []string, p Prompt, c client.Client, s store.Store) error {
 	} else {
 		i, err := p.Select(fmt.Sprintf("Found %d results", len(shows)), options)
 		if err != nil {
-			return err
+			return errors.E("select option failed", err, errors.SeverityWarn)
 		}
 		selected = shows[i]
 	}
 
+<<<<<<< HEAD
 	err = s.Create(&store.Item{ShowID: selected.ID, Type: selected.Type})
 
+=======
+	err = s.Create(&common.Item{ShowID: selected.ID, Type: selected.Type})
+>>>>>>> errors
 	if err != nil {
-		return err
+		return errors.E("create item failed", err)
 	}
 
 	return nil
