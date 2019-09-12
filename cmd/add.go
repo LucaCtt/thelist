@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/LucaCtt/thelist/common"
 	"github.com/LucaCtt/thelist/common/client"
 	"github.com/LucaCtt/thelist/common/store"
+	"github.com/LucaCtt/thelist/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,7 +28,7 @@ func add(args []string, p Prompt, c client.Client, s store.Store) error {
 		name = input
 	}
 
-	shows, err := searchShow(c, name)
+	shows, err := common.SearchShow(c, name)
 	if err != nil {
 		return errors.E("search show failed", err)
 	}
@@ -43,7 +45,7 @@ func add(args []string, p Prompt, c client.Client, s store.Store) error {
 		options[i] = fmt.Sprintf("%s (%d)", s.Name, s.Year)
 	}
 
-	var selected *Show
+	var selected *common.Show
 	if len(shows) == 1 {
 		selected = shows[0]
 	} else {
@@ -54,12 +56,8 @@ func add(args []string, p Prompt, c client.Client, s store.Store) error {
 		selected = shows[i]
 	}
 
-<<<<<<< HEAD
 	err = s.Create(&store.Item{ShowID: selected.ID, Type: selected.Type})
 
-=======
-	err = s.Create(&common.Item{ShowID: selected.ID, Type: selected.Type})
->>>>>>> errors
 	if err != nil {
 		return errors.E("create item failed", err)
 	}

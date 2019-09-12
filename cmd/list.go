@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/LucaCtt/thelist/common"
 	"github.com/LucaCtt/thelist/common/client"
 	"github.com/LucaCtt/thelist/common/store"
 	"github.com/spf13/cobra"
@@ -19,9 +20,9 @@ func list(p Prompt, c client.Client, s store.Store) error {
 		return fmt.Errorf("The list is empty")
 	}
 
-	shows := make([]*Show, len(items))
+	shows := make([]*common.Show, len(items))
 	for i, item := range items {
-		show, err := getShow(c, item.ShowID, item.Type)
+		show, err := common.GetShow(c, item.ShowID, item.Type)
 		if err != nil {
 			return fmt.Errorf("get show from client failed: %w", err)
 		}

@@ -16,7 +16,7 @@ func (s *Server) routes() {
 func getID(r *http.Request) (uint, error) {
 	id, err := strconv.ParseUint(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		return 0, errors.E("invaldi value id param", err, errors.CodeBadValue)
+		return 0, errors.E("invalid value for id param", err, errors.CodeBadValue)
 	}
 
 	return uint(id), nil

@@ -1,4 +1,4 @@
-package cmd
+package common
 
 import (
 	"fmt"
@@ -59,7 +59,9 @@ func convertToShowsList(movies []*client.Movie, tv []*client.TvShow) []*Show {
 	return shows
 }
 
-func getShow(c client.Client, id int, t string) (*Show, error) {
+// GetShow retrieves info on the movie or tv show (specified by the passed type) with the given id
+// and returns it in the form of a Show.
+func GetShow(c client.Client, id int, t string) (*Show, error) {
 	var show *Show
 
 	switch t {
@@ -82,7 +84,9 @@ func getShow(c client.Client, id int, t string) (*Show, error) {
 	return show, nil
 }
 
-func searchShow(c client.Client, name string) ([]*Show, error) {
+// SearchShow searches for movies and tv shows using the given client and
+// returns the results in the form a list of shows.
+func SearchShow(c client.Client, name string) ([]*Show, error) {
 	moviesChan := make(chan []*client.Movie)
 	tvChan := make(chan []*client.TvShow)
 	errChan := make(chan error)

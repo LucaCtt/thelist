@@ -4,8 +4,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/LucaCtt/thelist/common/client"
 	"github.com/LucaCtt/thelist/common/store"
-	"github.com/LucaCtt/thelist/router"
+	"github.com/LucaCtt/thelist/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -18,11 +19,13 @@ func startServer() {
 		log.Fatal(err)
 	}
 
-	router := router.New(dbStore)
+	client := client.New(viper.GetString(apiKeyOpt))
+
+	server := server.New(dbStore, client)
 	port := viper.GetString(serverPortOpt)
 
 	log.Print(webCmdStartMsg)
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	log.Fatal(http.ListenAndServe(":"+port, server))
 }
 
 func init() {
