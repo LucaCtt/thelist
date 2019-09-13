@@ -6,17 +6,10 @@ import (
 	"testing"
 
 	"github.com/LucaCtt/thelist/common/client"
+	"github.com/LucaCtt/thelist/common/testutils"
 	"github.com/LucaCtt/thelist/mocks"
 	"github.com/stretchr/testify/mock"
 )
-
-func assertErr(t *testing.T, got error, wantErr bool) {
-	t.Helper()
-
-	if (got != nil) != wantErr {
-		t.Errorf("got %v, wantErr %v", got, wantErr)
-	}
-}
 
 func genMovies(len int) []*client.Movie {
 	res := make([]*client.Movie, len)
@@ -45,7 +38,6 @@ func genTvShows(len int) []*client.TvShow {
 
 	return res
 }
-
 func Test_add(t *testing.T) {
 	t.Run("name in args", func(t *testing.T) {
 		show := "test"
@@ -59,7 +51,7 @@ func Test_add(t *testing.T) {
 
 		err := add([]string{show}, p, c, s)
 
-		assertErr(t, err, false)
+		testutils.AssertErr(t, err, false)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -76,7 +68,7 @@ func Test_add(t *testing.T) {
 
 		err := add([]string{}, p, c, s)
 
-		assertErr(t, err, false)
+		testutils.AssertErr(t, err, false)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -89,7 +81,7 @@ func Test_add(t *testing.T) {
 
 		err := add([]string{}, p, c, s)
 
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -104,7 +96,7 @@ func Test_add(t *testing.T) {
 
 		err := add([]string{show}, p, c, s)
 
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -121,7 +113,7 @@ func Test_add(t *testing.T) {
 
 		err := add([]string{show}, p, c, s)
 
-		assertErr(t, err, false)
+		testutils.AssertErr(t, err, false)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -134,7 +126,7 @@ func Test_add(t *testing.T) {
 
 		err := add([]string{}, p, c, s)
 
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -150,7 +142,7 @@ func Test_add(t *testing.T) {
 
 		err := add([]string{show}, p, c, s)
 
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -165,7 +157,7 @@ func Test_add(t *testing.T) {
 
 		err := add([]string{show}, p, c, s)
 
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -181,7 +173,7 @@ func Test_add(t *testing.T) {
 
 		err := add([]string{show}, p, c, s)
 
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 }

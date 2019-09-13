@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/LucaCtt/thelist/common/store"
+	"github.com/LucaCtt/thelist/common/testutils"
 	"github.com/LucaCtt/thelist/mocks"
 	"github.com/stretchr/testify/mock"
 )
@@ -21,7 +22,7 @@ func Test_list(t *testing.T) {
 		s.On("Delete", uint(1)).Return(nil)
 
 		err := list(p, c, s)
-		assertErr(t, err, false)
+		testutils.AssertErr(t, err, false)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -33,7 +34,7 @@ func Test_list(t *testing.T) {
 		s.On("All").Return([]*store.Item{}, nil)
 
 		err := list(p, c, s)
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -46,7 +47,7 @@ func Test_list(t *testing.T) {
 		s.On("All").Return([]*store.Item{&store.Item{ID: 1, ShowID: 1, Type: store.MovieType}}, nil)
 
 		err := list(p, c, s)
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -58,7 +59,7 @@ func Test_list(t *testing.T) {
 		s.On("All").Return([]*store.Item{}, errors.New("test"))
 
 		err := list(p, c, s)
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -73,7 +74,7 @@ func Test_list(t *testing.T) {
 		s.On("Delete", uint(1)).Return(errors.New("test"))
 
 		err := list(p, c, s)
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 
@@ -87,7 +88,7 @@ func Test_list(t *testing.T) {
 		s.On("All").Return([]*store.Item{&store.Item{ID: 1, ShowID: 1, Type: store.MovieType}}, nil)
 
 		err := list(p, c, s)
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		mock.AssertExpectationsForObjects(t, p, c, s)
 	})
 }

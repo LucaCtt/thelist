@@ -2,14 +2,9 @@ package store
 
 import (
 	"testing"
-)
 
-func assertErr(t *testing.T, got error, want bool) {
-	t.Helper()
-	if (got != nil) != want {
-		t.Fatalf("got %q, wantErr %t", got, want)
-	}
-}
+	"github.com/LucaCtt/thelist/common/testutils"
+)
 
 func assertItemsEqual(t *testing.T, got, want *Item) {
 	t.Helper()
@@ -28,6 +23,7 @@ func assertItemsEqual(t *testing.T, got, want *Item) {
 func assertItemsListsEqual(t *testing.T, got, want []*Item) {
 	t.Helper()
 
+	testutils.AssertLenEqual(t, len(got), len(want))
 	for i, item := range got {
 		assertItemsEqual(t, item, want[i])
 	}
@@ -61,7 +57,7 @@ func TestNewDbStore(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s, err := New(tt.path)
-			assertErr(t, err, tt.wantErr)
+			testutils.AssertErr(t, err, tt.wantErr)
 			if s != nil {
 				s.Close()
 			}
@@ -73,14 +69,14 @@ func TestDbStore_Close(t *testing.T) {
 	t.Run("no error", func(t *testing.T) {
 		s, _ := New(":memory:")
 		err := s.Close()
-		assertErr(t, err, false)
+		testutils.AssertErr(t, err, false)
 	})
 
 	t.Run("already closed", func(t *testing.T) {
 		s, _ := New(":memory:")
 		s.Close()
 		err := s.Close()
-		assertErr(t, err, false)
+		testutils.AssertErr(t, err, false)
 	})
 }
 
@@ -101,7 +97,7 @@ func TestDbStore_All(t *testing.T) {
 			seedStore(t, s, tt.items)
 
 			got, err := s.All()
-			assertErr(t, err, tt.wantErr)
+			testutils.AssertErr(t, err, tt.wantErr)
 			assertItemsListsEqual(t, got, tt.want)
 		})
 	}
@@ -125,7 +121,7 @@ func TestDbStore_Get(t *testing.T) {
 			seedStore(t, s, tt.items)
 
 			got, err := s.Get(tt.id)
-			assertErr(t, err, tt.wantErr)
+			testutils.AssertErr(t, err, tt.wantErr)
 			assertItemsEqual(t, got, tt.want)
 		})
 	}
@@ -145,7 +141,7 @@ func TestDbStore_Create(t *testing.T) {
 			defer s.Close()
 
 			err := s.Create(tt.item)
-			assertErr(t, err, tt.wantErr)
+			testutils.AssertErr(t, err, tt.wantErr)
 
 			got, _ := s.Get(1)
 			assertItemsEqual(t, got, tt.item)
@@ -170,7 +166,7 @@ func TestDbStore_Delete(t *testing.T) {
 			seedStore(t, s, tt.items)
 
 			err := s.Delete(tt.id)
-			assertErr(t, err, tt.wantErr)
+			testutils.AssertErr(t, err, tt.wantErr)
 
 			got, _ := s.Get(tt.id)
 			assertItemsEqual(t, got, nil)

@@ -7,44 +7,14 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+
+	"github.com/LucaCtt/thelist/common/testutils"
 )
-
-func assertErr(t *testing.T, got error, want bool) {
-	t.Helper()
-	if (got != nil) != want {
-		t.Fatalf("got %q, wantErr %t", got, want)
-	}
-}
-
-func assertMoviesEqual(t *testing.T, got, want *Movie) {
-	t.Helper()
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %+v, want %+v", got, want)
-	}
-}
-
-func assertTvShowsEqual(t *testing.T, got, want *TvShow) {
-	t.Helper()
-
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("got %+v, want %+v", got, want)
-	}
-}
-
-func assertLenEqual(t *testing.T, got, want int) {
-	t.Helper()
-
-	if got != want {
-		t.Errorf("got has len %d, want %d", got, want)
-		return
-	}
-}
 
 func assertMoviesListEqual(t *testing.T, got, want []*Movie) {
 	t.Helper()
 
-	assertLenEqual(t, len(got), len(want))
+	testutils.AssertLenEqual(t, len(got), len(want))
 	for i, s := range got {
 		if !reflect.DeepEqual(s, want[i]) {
 			t.Errorf("got[%d] %+v, want[%d] %+v", i, s, i, want[i])
@@ -55,7 +25,7 @@ func assertMoviesListEqual(t *testing.T, got, want []*Movie) {
 func assertTvShowsListEqual(t *testing.T, got, want []*TvShow) {
 	t.Helper()
 
-	assertLenEqual(t, len(got), len(want))
+	testutils.AssertLenEqual(t, len(got), len(want))
 	for i, s := range got {
 		if !reflect.DeepEqual(s, want[i]) {
 			t.Errorf("got[%d] %+v, want[%d] %+v", i, s, i, want[i])
@@ -163,14 +133,14 @@ func TestTMDbClient_SearchMovie(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := getTestClient(tt.handler)
 			got, err := c.SearchMovie("test")
-			assertErr(t, err, tt.wantErr)
+			testutils.AssertErr(t, err, tt.wantErr)
 			assertMoviesListEqual(t, got, tt.want)
 		})
 	}
 	t.Run("invalid baseurl", func(t *testing.T) {
 		c := Custom("test", "localhost:999999", &http.Client{})
 		got, err := c.SearchMovie("test")
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		assertMoviesListEqual(t, got, []*Movie{})
 	})
 }
@@ -232,14 +202,14 @@ func TestTMDbClient_SearchTvShow(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := getTestClient(tt.handler)
 			got, err := c.SearchTvShow("test")
-			assertErr(t, err, tt.wantErr)
+			testutils.AssertErr(t, err, tt.wantErr)
 			assertTvShowsListEqual(t, got, tt.want)
 		})
 	}
 	t.Run("invalid baseurl", func(t *testing.T) {
 		c := Custom("test", "localhost:999999", &http.Client{})
 		got, err := c.SearchTvShow("test")
-		assertErr(t, err, true)
+		testutils.AssertErr(t, err, true)
 		assertTvShowsListEqual(t, got, []*TvShow{})
 	})
 }
@@ -276,8 +246,8 @@ func TestTMDbClient_GetMovie(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := getTestClient(tt.handler)
 			got, err := c.GetMovie(tt.id)
-			assertErr(t, err, tt.wantErr)
-			assertMoviesEqual(t, got, tt.want)
+			testutils.AssertErr(t, err, tt.wantErr)
+			testutils.AssertEqual(t, got, tt.want)
 		})
 	}
 }
@@ -314,8 +284,8 @@ func TestTMDbClient_GetTvShow(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := getTestClient(tt.handler)
 			got, err := c.GetTvShow(tt.id)
-			assertErr(t, err, tt.wantErr)
-			assertTvShowsEqual(t, got, tt.want)
+			testutils.AssertErr(t, err, tt.wantErr)
+			testutils.AssertEqual(t, got, tt.want)
 		})
 	}
 }
