@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -11,114 +12,63 @@ import (
 	"github.com/LucaCtt/thelist/common/store"
 	"github.com/LucaCtt/thelist/common/testutils"
 	"github.com/LucaCtt/thelist/mocks"
+	"github.com/go-chi/chi"
+	"github.com/stretchr/testify/mock"
 )
+
+func assertListsEqual(t *testing.T, got, want []*common.Show) {
+	t.Helper()
+
+	testutils.AssertLenEqual(t, len(got), len(want))
+	for i, s := range got {
+		if !reflect.DeepEqual(s, want[i]) {
+			t.Errorf("got[%d] %+v, want[%d] %+v", i, s, i, want[i])
+		}
+	}
+}
 
 func TestServer_handleAPIGetAll(t *testing.T) {
 	tests := []struct {
 		name   string
 		items  []*store.Item
-		movies []*client.Movie
+		movie  *client.Movie
 		want   []*common.Show
+		status int
 	}{
-		// TODO: Add test cases.
+		{
+			name: "items found",
+			items: []*store.Item{
+				&store.Item{ID: 1, Type: store.MovieType, ShowID: 1},
+				&store.Item{ID: 2, Type: store.MovieType, ShowID: 2},
+			},
+			movie: &client.Movie{ID: 1, Title: "test1"},
+			want: []*common.Show{
+				&common.Show{ID: 1, Type: store.MovieType, Name: "test1"},
+				&common.Show{ID: 1, Type: store.MovieType, Name: "test1"},
+			},
+			status: http.StatusOK,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &mocks.Store{}
 			client := &mocks.Client{}
 
-			store.On("All").Return(tt.items)
-			client.On("GetMovie").Return(tt.movies)
+			store.On("All").Return(tt.items, nil)
+			client.On("GetMovie", mock.Anything).Return(tt.movie, nil)
 
-			s := &Server{store, client, http.NewServeMux()}
+			s := &Server{store, client, chi.NewRouter()}
 			s.router.HandleFunc("/", s.handleAPIGetAll())
 
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodGet, "/", nil)
 			s.ServeHTTP(w, r)
 
-			testutils.AssertEqual(t, w.Result().StatusCode, http.StatusOK)
-		})
-	}
-}
-
-func TestServer_handleAPISearch(t *testing.T) {
-	type fields struct {
-		store  store.Store
-		client client.Client
-		router *http.ServeMux
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   http.HandlerFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Server{
-				store:  tt.fields.store,
-				client: tt.fields.client,
-				router: tt.fields.router,
-			}
-			if got := s.handleAPISearch(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Server.handleAPISearch() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestServer_handleAPIDelete(t *testing.T) {
-	type fields struct {
-		store  store.Store
-		client client.Client
-		router *http.ServeMux
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   http.HandlerFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Server{
-				store:  tt.fields.store,
-				client: tt.fields.client,
-				router: tt.fields.router,
-			}
-			if got := s.handleAPIDelete(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Server.handleAPIDelete() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestServer_handleAPIPost(t *testing.T) {
-	type fields struct {
-		store  store.Store
-		client client.Client
-		router *http.ServeMux
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   http.HandlerFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Server{
-				store:  tt.fields.store,
-				client: tt.fields.client,
-				router: tt.fields.router,
-			}
-			if got := s.handleAPIPost(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Server.handleAPIPost() = %v, want %v", got, tt.want)
-			}
+			testutils.AssertEqual(t, w.Result().StatusCode, tt.status)
+			var got []*common.Show
+			err := json.NewDecoder(w.Body).Decode(&got)
+			testutils.AssertErr(t, err, false)
+			assertListsEqual(t, got, tt.want)
 		})
 	}
 }

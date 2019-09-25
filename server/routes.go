@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Server) routes() {
-	s.router.HandleFunc("/api", s.useStripSlashes(s.useRecoverer(s.useContentType("application/json", s.handleAPI()))))
+	s.router.Mount("/api", s.useStripSlashes(s.useRecoverer(s.useContentType("application/json", s.handleAPI()))))
 }
 
 func (s *Server) handleAPI() http.HandlerFunc {

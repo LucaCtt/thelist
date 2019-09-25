@@ -8,13 +8,14 @@ import (
 	"github.com/LucaCtt/thelist/common/client"
 	"github.com/LucaCtt/thelist/common/store"
 	"github.com/LucaCtt/thelist/errors"
+	"github.com/go-chi/chi"
 )
 
 // Server is an http server which serves a REST API for shows.
 type Server struct {
 	store  store.Store
 	client client.Client
-	router *http.ServeMux
+	router chi.Router
 }
 
 // New creates a new Server with the given dependencies.
@@ -22,7 +23,7 @@ func New(s store.Store, c client.Client) *Server {
 	server := &Server{
 		store:  s,
 		client: c,
-		router: http.NewServeMux(),
+		router: chi.NewRouter(),
 	}
 	server.routes()
 	return server
